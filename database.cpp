@@ -7,8 +7,7 @@
 #include "database.h"
 
 //erstellt eine neue ODBC Datenbankverbindung
-Database::Database(QObject *parent)
-    : QObject{parent}
+Database::Database()
 {
     db = QSqlDatabase::addDatabase("QODBC");
 }

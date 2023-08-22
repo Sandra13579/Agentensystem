@@ -1,8 +1,7 @@
-QT       += core gui
+QT = core
+QT       += sql      #damit sql benutzt werden kann
 
-greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
-
-CONFIG += c++17
+CONFIG += c++17 cmdline
 
 # You can make your code fail to compile if it uses deprecated APIs.
 # In order to do so, uncomment the following line.
@@ -10,7 +9,6 @@ CONFIG += c++17
 
 SOURCES += \
     database.cpp \
-    main.cpp \
     main.cpp \
     dispatcher.cpp \
     robot.cpp \
@@ -23,9 +21,6 @@ HEADERS += \
     robot.h \
     station.h \
     workpiece.h
-
-FORMS += \
-    dispatcher.ui
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
