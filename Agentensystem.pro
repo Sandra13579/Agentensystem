@@ -12,11 +12,13 @@ SOURCES += \
     main.cpp \
     main.cpp \
     dispatcher.cpp \
+    robot.cpp \
     station.cpp \
     workpiece.cpp
 
 HEADERS += \
     dispatcher.h \
+    robot.h \
     station.h \
     workpiece.h
 
