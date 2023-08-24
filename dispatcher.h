@@ -9,13 +9,15 @@ class Dispatcher
 public:
     Dispatcher();
     ~Dispatcher();
+    void updateJobtype();
 private:
     QTimer* updateTimer;
     Database *database;
-    void updateJobtype();
+    //void updateJobtype();
     void maintenace();
     void charging();
     void breakjob();
+    void publishbreak(int station_id, int station_place_id, int robot_id);
     void transport();
 };
 
