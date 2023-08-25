@@ -2,7 +2,6 @@
 #define DISPATCHER_H
 
 #include "database.h"
-#include <QTimer>
 
 class Dispatcher
 {
@@ -11,7 +10,6 @@ public:
     ~Dispatcher();
     void updateJobtype();
 private:
-    QTimer* updateTimer;
     Database *database;
     //void updateJobtype();
     void maintenace();
