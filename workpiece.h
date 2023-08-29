@@ -1,11 +1,18 @@
 #ifndef WORKPIECE_H
 #define WORKPIECE_H
 
+#include "database.h"
 
-class workpiece
+class Workpiece
 {
 public:
-    workpiece();
+    Workpiece();
+    ~Workpiece();
+    void updateOrder();
+private:
+    Database *database;
+    void orderAllocation();
+    void orderAdministration();
 };
 
 #endif // WORKPIECE_H
