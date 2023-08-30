@@ -67,7 +67,7 @@ void Workpiece::orderAdministration()
     database->Exec(&query);
     while (query.next())
     {
-        //qDebug() << "in Bearbeitung -> fertig produziert" << query.record().value(0).toInt() << query.record().value(1).toInt() << query.record().value(2).toInt();
+        qDebug() << "in Bearbeitung -> fertig produziert" << query.record().value(0).toInt() << query.record().value(1).toInt() << query.record().value(2).toInt();
         if (query.record().value(0).toInt() == query.record().value(2).toInt() && query.record().value(0).toInt() != 0)
         {
             // aktualisiere den Auftrag (status = fertig produziert)
