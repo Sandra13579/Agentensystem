@@ -1,5 +1,6 @@
 QT = core
-QT       += sql      #damit sql benutzt werden kann
+QT += sql      #damit sql benutzt werden kann
+QT += mqtt
 
 CONFIG += c++17 cmdline
 
@@ -13,14 +14,17 @@ SOURCES += \
     dispatcher.cpp \
     robot.cpp \
     station.cpp \
-    workpiece.cpp
+    workpiece.cpp \
+    interface.cpp
 
 HEADERS += \
     database.h \
     dispatcher.h \
+    global.h \
     robot.h \
     station.h \
-    workpiece.h
+    workpiece.h \
+    interface.h
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin

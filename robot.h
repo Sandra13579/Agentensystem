@@ -2,10 +2,10 @@
 #define ROBOT_H
 
 
-class robot
+class Robot
 {
 public:
-    robot();
+    Robot();
 };
 
 #endif // ROBOT_H

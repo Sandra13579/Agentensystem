@@ -1,6 +1,6 @@
 #include "robot.h"
 
-robot::robot()
+Robot::Robot()
 {
 
 }
