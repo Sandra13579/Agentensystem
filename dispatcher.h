@@ -11,7 +11,6 @@ public:
     void updateJobtype();
 private:
     Database *database;
-    //void updateJobtype();
     void maintenace();
     void charging();
     void breakjob();

@@ -1,11 +1,19 @@
 #ifndef STATION_H
 #define STATION_H
 
+#include "database.h"
 
-class station
+class Station
 {
 public:
-    station();
+    Station();
+    ~Station();
+    void updateStation();
+private:
+    Database *database;
+    void stationrelease();
+    void maintenanceChargingStation();
+    void workpieceProcessing();
 };
 
 #endif // STATION_H
