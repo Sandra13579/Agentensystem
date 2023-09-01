@@ -72,6 +72,8 @@ private:
 signals:
     void robotStateChanged(int robotId, State state);
     void chargingStateChanged(int stationId, State state);
+    void connected();
+    void disconnected();
 
 public slots:
     //MQTT payload methods

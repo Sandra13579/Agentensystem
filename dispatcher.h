@@ -1,21 +1,32 @@
 #ifndef DISPATCHER_H
 #define DISPATCHER_H
 
+#include <QObject>
+#include <QSqlQuery>
+#include <QSqlIndex>
+#include <QtMath>
+
+#include "global.h"
 #include "database.h"
 
-class Dispatcher
+class Dispatcher : public QObject
 {
+    Q_OBJECT
 public:
-    Dispatcher();
+    explicit Dispatcher(QObject *parent = nullptr);
+    //Dispatcher();
     ~Dispatcher();
+public slots:
     void updateJobtype();
 private:
     Database *database;
     void maintenace();
     void charging();
-    void breakjob();
-    void publishbreak(int station_id, int station_place_id, int robot_id);
+    void breakAfterJob();
+    void publishBreak(int station_id, int station_place_id, int robot_id);
     void transport();
+signals:
+    void sendJob(Job job, int robotNo);
 };
 
 #endif // DISPATCHER_H

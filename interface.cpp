@@ -8,8 +8,9 @@ Interface::Interface(QObject *parent)
     _udpSocket = new QUdpSocket(parent);
     _robotPositionWriter = new QTimer(parent);
     connect(_robotPositionWriter, &QTimer::timeout, this, &Interface::WriteRobotPositionsInDatabase);
-    _database = new Database();
+    _database = new Database("Interface");
     _database->Connect();
+
     _robotPositionWriter->start(1000);
 
     //QTimer::singleShot(3000, this, &Interface::SendTest);
@@ -77,33 +78,33 @@ void Interface::WriteRobotPositionsInDatabase()
     qDebug() << "Writing position data into the database.";
     for (int i = 0; i < 4; i++)
     {
-        QSqlQuery query;
+        QSqlQuery query(_database->db());
         query.prepare("UPDATE vpj.robot SET robot_position_x = :x, robot_position_y = :y, TIMESTAMP = :timestamp WHERE robot_id = :id");
         query.bindValue(":id", i + 1);
         query.bindValue(":x", _robotPositions.positions[i].x);
         query.bindValue(":y", _robotPositions.positions[i].y);
         query.bindValue(":timestamp", QDate::currentDate().toString("yyyy-MM-dd") + " " + _robotPositions.timestamp);
-        _database->Exec(&query);
+        query.exec();
     }
     _positionDataAvailable = false;
 }
 
 void Interface::WriteBatteryLevelIntoDatabase(int robotId, int batteryLevel)
 {
-    QSqlQuery query;
+    QSqlQuery query(_database->db());
     query.prepare("UPDATE vpj.robot SET battery_level = :battery_level WHERE robot_id = :id");
     query.bindValue(":id", robotId);
     query.bindValue(":battery_level", batteryLevel);
-    _database->Exec(&query);
+    query.exec();
 }
 
 void Interface::WriteRobotStatusIntoDatabase(int robotId, State state)
 {
-    QSqlQuery query;
+    QSqlQuery query(_database->db());
     query.prepare("UPDATE vpj.robot SET state_id = :state_id WHERE robot_id = :id");
     query.bindValue(":id", robotId);
     query.bindValue(":state_id", static_cast<int>(state));
-    _database->Exec(&query);
+    query.exec();
 }
 
 void Interface::GetSubscriptionPayload(const QMqttMessage msg)
@@ -190,10 +191,12 @@ void Interface::UpdateConnectionState(QMqttClient::ClientState state)
     {
     case QMqttClient::Connected:
         qDebug() << "MQTT Client with ID" << _mqttClient->clientId() << "connected to broker:" << _mqttClient->hostname() << ":" << _mqttClient->port();
+        emit connected();
         SubscribeToTopics();
         break;
     case QMqttClient::Disconnected:
         qDebug() << "MQTT Client with ID" << _mqttClient->clientId() << "disconnected!";
+        emit disconnected();
         UnsubscribeAllTopics();
         QTimer::singleShot(2000, this, &Interface::ReconnectToBroker);
         break;
@@ -257,8 +260,7 @@ void Interface::SendCharging (bool charging, int robotNo)
 void Interface::SendTest()
 {
     SendCheck(4);
-    Job job;
-    job.jobType = JobType::Transport;
+    Job job(JobType::Transport);
     job.start = {1,2};
     job.destination = {1,3};
     SendJob(job, 2);

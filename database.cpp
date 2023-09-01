@@ -7,9 +7,9 @@
 #include "database.h"
 
 //erstellt eine neue ODBC Datenbankverbindung
-Database::Database()
+Database::Database(QString connectionName)
 {
-    db = QSqlDatabase::addDatabase("QODBC");
+    _db = QSqlDatabase::addDatabase("QODBC", connectionName);
 }
 
 //Verbindung zu Datenbank aufbauen
@@ -20,25 +20,25 @@ void Database::Connect()
         "SERVERNODE=127.0.0.1:3306;"
         "UID=root;"
         "PWD=vpj;");
-    db.setDatabaseName(connectString);
+    _db.setDatabaseName(connectString);
 
     //konnte die Verbindung aufgebaut werden?
-    if(db.open())
+    if(_db.open())
     {
         qDebug() << "ok";
     }
     else
     {
-        qDebug() << db.lastError().text();
+        qDebug() << _db.lastError().text();
     }
 }
 
 //Verbindung schließen/trennen
 void Database::Disconnect()
 {
-    if(db.open())
+    if(_db.open())
     {
-        db.close();
+        _db.close();
     }
 }
 

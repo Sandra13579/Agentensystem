@@ -1,13 +1,16 @@
 #ifndef WORKPIECE_H
 #define WORKPIECE_H
 
+#include <QObject>
 #include "database.h"
 
-class Workpiece
+class Workpiece : public QObject
 {
+    Q_OBJECT
 public:
-    Workpiece();
+    explicit Workpiece(QObject *parent = nullptr);
     ~Workpiece();
+public slots:
     void updateOrder();
 private:
     Database *database;

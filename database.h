@@ -8,15 +8,15 @@ class Database : public QObject
 {
     Q_OBJECT
 public:
-    explicit Database();
+    explicit Database(QString connectionName);
     void Connect();  //Methode zur Herstellung der Datenbankverbindung
     void Disconnect();  //Methode zur Trennung der Datenbankverbindung
     void Exec(QSqlQuery *query);  //Methode zum Lesen und Schreiben auf eine Datenbank
-
-signals:
+    QSqlDatabase db() const { return _db; } //Übergabe an query!
 
 private:
-    QSqlDatabase db;    //repräsentiert die tatsächliche Datenbankverbindung
+    QSqlDatabase _db;    //repräsentiert die tatsächliche Datenbankverbindung
+
 };
 
 #endif // DATABASE_H

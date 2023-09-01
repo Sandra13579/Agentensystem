@@ -43,7 +43,12 @@ struct RobotPositions
 
 struct Job
 {
-    Job() {}
+    Job(JobType jT)
+    {
+        jobType = jT;
+        start = {0, 0};
+        destination = {0, 0};
+    }
     JobType jobType;
     struct {
         int stationId;
