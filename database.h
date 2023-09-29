@@ -2,7 +2,9 @@
 #define DATABASE_H
 
 #include <QSqlDatabase>
+#include <QSqlError>
 #include <QObject>
+#include <QDebug>
 
 class Database : public QObject
 {
@@ -11,11 +13,10 @@ public:
     explicit Database(QString connectionName);
     void Connect();  //Methode zur Herstellung der Datenbankverbindung
     void Disconnect();  //Methode zur Trennung der Datenbankverbindung
-    void Exec(QSqlQuery *query);  //Methode zum Lesen und Schreiben auf eine Datenbank
-    QSqlDatabase db() const { return _db; } //Übergabe an query!
+    QSqlDatabase db() const { return m_db; } //Übergabe an query!
 
 private:
-    QSqlDatabase _db;    //repräsentiert die tatsächliche Datenbankverbindung
+    QSqlDatabase m_db;    //repräsentiert die tatsächliche Datenbankverbindung
 
 };
 

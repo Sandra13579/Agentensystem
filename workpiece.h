@@ -2,6 +2,9 @@
 #define WORKPIECE_H
 
 #include <QObject>
+#include <QSqlQuery>
+#include <QSqlIndex>
+
 #include "database.h"
 
 class Workpiece : public QObject

@@ -1,9 +1,4 @@
 #include "station.h"
-#include "database.h"
-
-#include <QSqlQuery>
-#include <QSqlIndex>
-#include <QDateTime>
 
 Station::Station(QObject *parent)
     : QObject{parent}
@@ -19,12 +14,12 @@ Station::~Station()
 
 void Station::updateStation()
 {
-    stationrelease();
+    stationRelease();
     maintenanceChargingStation();
-    workpieceProcessing();
+    //workpieceProcessing();
 }
 
-void Station::stationrelease() //Stations-/Platzfreigabe nach dem ein Roboter aus dem Weg gefahren ist
+void Station::stationRelease() //Stations-/Platzfreigabe nach dem ein Roboter aus dem Weg gefahren ist
 {
     int blocking_time = 10;
     QDateTime currentDateTime = QDateTime::currentDateTime();

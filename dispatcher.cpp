@@ -17,70 +17,79 @@ void Dispatcher::updateJobtype()
     this->maintenace();
     this->charging();
     this->breakAfterJob();
-    this->transport();
+    //this->transport();
 }
 
 void Dispatcher::maintenace()
 {
-    QSqlQuery query(database->db()), query2(database->db());
+    QSqlQuery query(database->db());
     query.prepare("SELECT robot_id FROM vpj.robot WHERE state_id = 0 AND maintenance = 1 AND jobtype_id != 2");
     query.exec();
     while(query.next())
     {
-        Job job(JobType::Maintainance);
+        int robotId = query.record().value(0).toInt();
+        Job job(JobType::Maintenance);
         job.start = {0, 0};
         job.destination = {10, 1};
         // publish Wartungsauftrag (jobtype =2, destination{station=10,place_id=1}) an query.record().value(0).toInt()
-        emit sendJob(job, query.record().value(0).toInt());
+        qDebug() << "Roboter" << robotId << "wird in Wartung geschickt";
+        emit sendJob(job, robotId);
 
         //Robotertabelle + Historie aktualisieren
+        QSqlQuery query2(database->db());
         query2.prepare("UPDATE vpj.robot SET jobtype_id = 2 WHERE robot_id = :robot_id");
-        query2.bindValue(":robot_id", query.record().value(0).toInt());
+        query2.bindValue(":robot_id", robotId);
         query2.exec();
         query2.prepare("INSERT INTO vpj.robot_history (robot_position_x, robot_position_y, battery_level, station_place_id, jobtype_id ,state_id, robot_id) SELECT robot_position_x, robot_position_y, battery_level, station_place_id, jobtype_id ,state_id, robot_id FROM vpj.robot WHERE robot_id = :robot_id; ");
-        query2.bindValue(":robot_id", query.record().value(0).toInt());
+        query2.bindValue(":robot_id", robotId);
         query2.exec();
     }
 }
 
 void Dispatcher::charging()
 {
-    QSqlQuery query(database->db()), query2(database->db());
+    QSqlQuery query(database->db());
     //suche freie Ladestationen
     query.prepare("SELECT place_id FROM vpj.station_place WHERE (station_place_id = 25 OR station_place_id = 26) AND state_id = 0 AND maintenance = 0;");
     query.exec();
-    //suche freie Roboter mit geringstem Battery Zustand, aber mindestens Batteriezustand < 30
-    query2.prepare("SELECT robot_id, state_id FROM vpj.robot WHERE battery_level < 30 AND maintenance = 0 AND state_id IN (0, 1, 2, 6) ORDER BY battery_level ASC");
-    query2.exec();
     while (query.next()) // solange eine freie Ladestation vorhanden
     {
-        //qDebug() << "place_id" << query.record().value(0).toInt();
+        int placeId = query.record().value(0).toInt();
+        //qDebug() << "Ladestation" << placeId << "ausgewählt, suche ladebereiten Roboter";
+
+        //suche freie Roboter mit geringstem Battery Zustand, aber mindestens Batteriezustand < 30
+        QSqlQuery query2(database->db());
+        query2.prepare("SELECT robot_id, state_id FROM vpj.robot WHERE battery_level < 30 AND maintenance = 0 AND state_id IN (0, 1, 2, 6) AND jobtype_id = 3 ORDER BY battery_level ASC");
+        query2.exec();
         if (query2.next()) // wenn auch ein Roboter da ist, der geladen werden muss
         {
-            //qDebug() << "robot_id" << query2.record().value(0).toInt() << ", state_id" << query.record().value(1).toInt();
-            if (query2.record().value(1).toInt() == 0) // wenn freie Ladestation und freier Roboter
+            int robotId = query2.record().value(0).toInt();
+            State state = static_cast<State>(query2.record().value(1).toInt());
+            qDebug() << "Roboter" << robotId << "mit Status" << state << "muss geladen werden";
+            if (state == State::Available) // wenn freie Ladestation und freier Roboter
             {
-                //qDebug() << "Ladeauftrag erteilen";
+                qDebug() << "Ladeauftrag erteilt für Roboter" << robotId;
+                qDebug() << "Fahrt zur Ladestation" << placeId;
                 // publish Ladeauftrag (jobtype =1, destination{station=9,place_id=query.record().value(0).toInt()}) an query2.record().value(0).toInt()
                 Job job(JobType::Charging);
                 job.start = {0, 0};
-                job.destination = {9, query.record().value(0).toInt()};
-                emit sendJob(job, query2.record().value(0).toInt()); // instruct to send a job (MQTT)
+                job.destination = {9, placeId};
+                emit sendJob(job, robotId); // instruct to send a job (MQTT)
 
                 QSqlQuery query3(database->db());
                 //Stationsplatztabelle + Historie aktualisieren (Platz reservieren)
                 query3.prepare("UPDATE vpj.station_place SET state_id = 2 WHERE station_id = 9 AND place_id = :place_id;");
-                query3.bindValue(":place_id", query.record().value(0).toInt());
+                query3.bindValue(":place_id", placeId);
                 query3.exec();
                 query3.prepare("INSERT INTO vpj.station_place_history (state_id, station_place_id) SELECT state_id, station_place_id FROM vpj.station_place WHERE station_id = 9 AND place_id = :place_id;; ");
-                query3.bindValue(":place_id", query.record().value(0).toInt());
+                query3.bindValue(":place_id", placeId);
                 query3.exec();
                 //Robotertabelle + Historie aktualisieren
-                query3.prepare("UPDATE vpj.robot SET jobtype_id = 1 WHERE  robot_id = :robot_id;");
-                query3.bindValue(":robot_id", query2.record().value(0).toInt());
+                query3.prepare("UPDATE vpj.robot SET jobtype_id = 1 WHERE robot_id = :robot_id;");
+                query3.bindValue(":robot_id", robotId);
                 query3.exec();
                 query3.prepare("INSERT INTO vpj.robot_history (robot_position_x, robot_position_y, battery_level, station_place_id, jobtype_id ,state_id, robot_id) SELECT robot_position_x, robot_position_y, battery_level, station_place_id, jobtype_id ,state_id, robot_id FROM vpj.robot WHERE robot_id = :robot_id; ");
-                query3.bindValue(":robot_id", query2.record().value(0).toInt());
+                query3.bindValue(":robot_id", robotId);
                 query3.exec();
             }
         }
@@ -105,7 +114,10 @@ void Dispatcher::breakAfterJob()
     query.exec();
     while (query.next())
     {
-        publishBreak(9, query.record().value(0).toInt(), query.record().value(1).toInt());
+        int stationPlaceId = query.record().value(0).toInt();
+        int robotId = query.record().value(1).toInt();
+        qDebug() << "Roboter" << robotId << "an Station" << stationPlaceId << "zur Pause schicken";
+        publishBreak(9, stationPlaceId, robotId);
     }
 }
 
@@ -129,6 +141,7 @@ void Dispatcher::publishBreak(int stationId, int stationPlaceId, int robotId)
     }
     else //Pause nach Laden
     {
+        qDebug() << "Pause nach Laden";
         //qDebug() << "nach load: publish stat_id " << station_id << ", place " << station_place_id << ", rob_id " << robot_id;
         //Stationsplatz + Historie aktualisieren
         query.prepare("UPDATE vpj.station_place SET clearing_time = NOW() WHERE station_place_id = :station_place_id;");

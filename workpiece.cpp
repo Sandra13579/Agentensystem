@@ -1,8 +1,4 @@
 #include "workpiece.h"
-#include "database.h"
-
-#include <QSqlQuery>
-#include <QSqlIndex>
 
 Workpiece::Workpiece(QObject *parent)
     : QObject{parent}
@@ -18,8 +14,8 @@ Workpiece::~Workpiece()
 
 void Workpiece::updateOrder()
 {
-    this->orderAllocation();
-    this->orderAdministration();
+    //this->orderAllocation();
+    //this->orderAdministration();
 }
 
 //Werkstück - Auftragszuordnung

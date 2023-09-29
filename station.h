@@ -2,6 +2,10 @@
 #define STATION_H
 
 #include <QObject>
+#include <QSqlQuery>
+#include <QSqlIndex>
+#include <QDateTime>
+
 #include "database.h"
 
 class Station : public QObject
@@ -14,7 +18,7 @@ public slots:
     void updateStation();
 private:
     Database *database;
-    void stationrelease();
+    void stationRelease();
     void maintenanceChargingStation();
     void workpieceProcessing();
 };

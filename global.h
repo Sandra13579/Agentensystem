@@ -2,17 +2,18 @@
 #define GLOBAL_H
 
 #include <QList>
+#include <QDebug>
 
 enum class JobType
 {
     Transport = 0,
     Charging = 1,
-    Maintainance = 2,
+    Maintenance = 2,
     Pause = 3
 };
 
 enum class State
-{
+{    
     Available = 0,
     Assigned = 1,
     Reserved = 2,
@@ -41,23 +42,60 @@ struct RobotPositions
     QString timestamp;
 };
 
+struct Place
+{
+    int stationId;
+    int placeId;
+};
+
 struct Job
 {
     Job(JobType jT)
     {
         jobType = jT;
-        start = {0, 0};
-        destination = {0, 0};
     }
     JobType jobType;
-    struct {
-        int stationId;
-        int placeId;
-    } start;
-    struct {
-        int stationId;
-        int placeId;
-    } destination;
+    Place start;
+    Place destination;
 };
+
+inline QDebug operator<<(QDebug debug, const State state) {
+    QDebugStateSaver stateSaver(debug);
+    switch (state) {
+    case State::Available:
+        debug.nospace() << "Available";
+        break;
+    case State::Assigned:
+        debug.nospace() << "Assigned";
+        break;
+    case State::Reserved:
+        debug.nospace() << "Reserved";
+        break;
+    case State::Inactive:
+        debug.nospace() << "Inactive";
+        break;
+    case State::Fault:
+        debug.nospace() << "Fault";
+        break;
+    case State::ReadyForCharging:
+        debug.nospace() << "ReadyForCharging";
+        break;
+    case State::ReadyForReading:
+        debug.nospace() << "ReadyForReading";
+        break;
+    case State::Charging:
+        debug.nospace() << "Charging";
+        break;
+    case State::Connected:
+        debug.nospace() << "Connected";
+        break;
+    case State::Initial:
+        debug.nospace() << "Initial";
+        break;
+    default:
+        break;
+    }
+    return debug;
+}
 
 #endif // GLOBAL_H
