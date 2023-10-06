@@ -14,8 +14,8 @@ Workpiece::~Workpiece()
 
 void Workpiece::updateOrder()
 {
-    //this->orderAllocation();
-    //this->orderAdministration();
+    this->orderAllocation();
+    this->orderAdministration();
 }
 
 //Werkstück - Auftragszuordnung
@@ -27,32 +27,37 @@ void Workpiece::orderAllocation()
     query.exec();
     if(query.next())
     {
+        int workpieceId = query.record().value(0).toInt();
+        qDebug() << "Werkstück" << workpieceId << "ist keinem Auftrag zugeordnet";
         //Such nach ältestem Auftrag, für den noch werkstücke bearbeitet werden müssen
         QSqlQuery query2(database->db());
-        query2.prepare("SELECT production_order_id FROM vpj.production_order WHERE assigned_workpieces < number_of_pieces ORDER BY TIMESTAMP ASC LIMIT 1;");
+        query2.prepare("SELECT production_order_id FROM vpj.production_order WHERE assigned_workpieces < number_of_pieces ORDER BY TIMESTAMP ASC LIMIT 1");
         query2.exec();
         if(query2.next())
         {
+            int productionOrderId = query2.record().value(0).toInt();
+            qDebug() << "Für Produktionsauftrag" << productionOrderId << "müssen noch Werkstücke bearbeitet werden";
             //aktualisiere Produktionsauftragstabelle (zugeteilte Werkstücke+=1 und auftragsstatus = "in Bearbeitung")
             QSqlQuery query3(database->db());
             query3.prepare("UPDATE vpj.production_order SET assigned_workpieces = assigned_workpieces +1, workpiece_state_id = 2 WHERE production_order_id = :production_order_id;");
-            query3.bindValue(":production_order_id", query2.record().value(0).toInt());
+            query3.bindValue(":production_order_id", productionOrderId);
             query3.exec();
             //suche nach fertigungsablauf_id
-            query3.prepare("SELECT production_process_id FROM vpj.production_order WHERE production_order_id = :production_order_id;");
-            query3.bindValue(":production_order_id", query2.record().value(0).toInt());
+            query3.prepare("SELECT production_process_id FROM vpj.production_order WHERE production_order_id = :production_order_id");
+            query3.bindValue(":production_order_id", productionOrderId);
             query3.exec();
             query3.next();
+            int productionProcessId = query3.record().value(0).toInt();
+            qDebug() << "Werkstück" << workpieceId << "wird dem Auftrag" << productionOrderId << "zugewiesen";
             //Werkstücktabelle + Historie aktualisieren (Zuordnung des Werkstückes zum Auftrag)
-            QSqlQuery query4(database->db());
-            query4.prepare("UPDATE vpj.workpiece SET production_order_id = :production_order_id, step_id = 0, production_process_id = :production_process_id WHERE workpiece_id = :workpiece_id;");
-            query4.bindValue(":production_order_id", query2.record().value(0).toInt());
-            query4.bindValue(":production_process_id", query3.record().value(0).toInt());
-            query4.bindValue(":workpiece_id", query.record().value(0).toInt());
-            query4.exec();
-            query4.prepare("INSERT INTO vpj.workpiece_history (rfid, current_step_duration, workpiece_state_id, workpiece_id, robot_id, station_place_id, production_order_id, step_id, production_process_id) SELECT rfid, current_step_duration, workpiece_state_id, workpiece_id, robot_id, station_place_id, production_order_id, step_id, production_process_id FROM vpj.workpiece WHERE workpiece_id = :workpiece_id; ");
-            query4.bindValue(":workpiece_id", query.record().value(0).toInt());
-            query4.exec();
+            query3.prepare("UPDATE vpj.workpiece SET production_order_id = :production_order_id, step_id = 0, production_process_id = :production_process_id WHERE workpiece_id = :workpiece_id;");
+            query3.bindValue(":production_order_id", productionOrderId);
+            query3.bindValue(":production_process_id", productionProcessId);
+            query3.bindValue(":workpiece_id", workpieceId);
+            query3.exec();
+            query3.prepare("INSERT INTO vpj.workpiece_history (rfid, current_step_duration, workpiece_state_id, workpiece_id, robot_id, station_place_id, production_order_id, step_id, production_process_id) SELECT rfid, current_step_duration, workpiece_state_id, workpiece_id, robot_id, station_place_id, production_order_id, step_id, production_process_id FROM vpj.workpiece WHERE workpiece_id = :workpiece_id; ");
+            query3.bindValue(":workpiece_id", workpieceId);
+            query3.exec();
         }
     }
 }
@@ -66,13 +71,17 @@ void Workpiece::orderAdministration()
     query.exec();
     while (query.next())
     {
-        qDebug() << "in Bearbeitung -> fertig produziert" << query.record().value(0).toInt() << query.record().value(1).toInt() << query.record().value(2).toInt();
-        if (query.record().value(0).toInt() == query.record().value(2).toInt() && query.record().value(0).toInt() != 0)
+        int workpieceCount = query.record().value(0).toInt();
+        int productionOrderId = query.record().value(1).toInt();
+        int assignedWorkpieces = query.record().value(2).toInt();
+        //qDebug() << "in Bearbeitung -> fertig produziert" << workpieceCount << productionOrderId << assignedWorkpieces;
+        if (workpieceCount != 0 && workpieceCount == assignedWorkpieces)
         {
             // aktualisiere den Auftrag (status = fertig produziert)
+            qDebug() << workpieceCount << "Werkstücke fertig produziert";
             QSqlQuery query2(database->db());
             query2.prepare("UPDATE vpj.production_order SET workpiece_state_id = 0 WHERE production_order_id = :production_order_id");
-            query2.bindValue(":production_order_id", query.record().value(1).toInt());
+            query2.bindValue(":production_order_id", productionOrderId);
             query2.exec();
         }
     }
@@ -81,13 +90,17 @@ void Workpiece::orderAdministration()
     query.exec();
     while (query.next())
     {
-        qDebug() << "fertig produziert -> ausgeliefert" << query.record().value(0).toInt() << query.record().value(1).toInt() << query.record().value(2).toInt();
-        if (query.record().value(0).toInt() == query.record().value(2).toInt() && query.record().value(0).toInt() != 0)
+        int workpieceCount = query.record().value(0).toInt();
+        int productionOrderId = query.record().value(1).toInt();
+        int assignedWorkpieces = query.record().value(2).toInt();
+        //qDebug() << "fertig produziert -> ausgeliefert" << workpieceCount << productionOrderId << assignedWorkpieces;
+        if (workpieceCount != 0 && workpieceCount == assignedWorkpieces)
         {
             // aktualisiere den Auftrag (status = ausgeliefert)
+            qDebug() << workpieceCount << "Werkstücke ausgeliefert";
             QSqlQuery query2(database->db());
             query2.prepare("UPDATE vpj.production_order SET workpiece_state_id = 4, delivery_time = NOW() WHERE production_order_id = :production_order_id;");
-            query2.bindValue(":production_order_id", query.record().value(1).toInt());
+            query2.bindValue(":production_order_id", productionOrderId);
             query2.exec();
         }
     }

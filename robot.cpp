@@ -19,7 +19,7 @@ Robot::Robot(QObject *parent)
 
 void Robot::updateRobot()
 {
-    //this->transport();
+    this->transport();
     this->charging();
     this->pause();
     this->maintenance();
@@ -53,7 +53,7 @@ void Robot::updateRobotDatabase(int robotId, State state)
     query.exec();
 }
 
-//Update robots station place in DB
+//Update robots state and station place in DB
 void Robot::updateRobotDatabase(int robotId, State state, Place place)
 {
     QSqlQuery query(m_database->db());
@@ -129,46 +129,40 @@ void Robot::transport()
         if (robotState == State::Available && m_robotStates[robotId] == State::Reserved)
         {
             //Roboter reservieren
+            qDebug() << "Transport: Robot" << robotId << "is reserved";
             updateRobotDatabase(robotId, State::Reserved);
-            qDebug() << "Roboter" << robotId << "ist reserviert";
         }
 
         //Roboterstatus DB = reserviert & Roboterstatus Gewerk2 = belegt -> Roboter transportiert Werkstück
         if (robotState == State::Reserved && m_robotStates[robotId] == State::Assigned)
         {
             //Roboter hat Werkstück -> belegt
-            //ToDo
-            //update... übermittelten Stationsplatz von GW2 in roboterDB schreiben
-            updateRobotDatabase(robotId, State::Assigned);
-            qDebug() << "Roboter" << robotId << "ist belegt.";
+            qDebug() << "Transport: Robot" << robotId << "is assigned";
+            updateRobotDatabase(robotId, State::Assigned, m_robotPlaces[robotId]);
         }
 
         //Roboterstatus DB = belegt & Roboterstatus Gewerk2 = bereit zum Lesen -> Roboter steht mit Werkstück am RFID Reader
         if (robotState == State::Assigned && m_robotStates[robotId] == State::ReadyForReading)
         {
+            qDebug() << "Transport: Robot" << robotId << "is ready for reading";
             reading(robotId);
             updateRobotDatabase(robotId, State::ReadyForReading);
-            qDebug() << "Roboter" << robotId << "ist bereit zum Lesen";   
         }
 
         //Roboterstatus DB = bereit zum Lesen & Roboterstatus Gewerk2 = belegt -> Roboter transportiert Werkstück
         if (robotState == State::ReadyForReading && m_robotStates[robotId] == State::Assigned)
         {
+            qDebug() << "Transport: Robot" << robotId << "is assigned";
             checking(robotId);
-            //ToDo
-            //update... übermittelten Stationsplatz von GW2 in roboterDB schreiben
-            updateRobotDatabase(robotId, State::Assigned);
-            qDebug() << "Roboter" << robotId << "ist belegt";
+            updateRobotDatabase(robotId, State::Assigned, m_robotPlaces[robotId]);
         }
 
         //Roboterstatus DB = „belegt“ & Roboterstatus (Gewerk2) = „frei“, dann rufe auf „Transportauftragabgeschlossenfunktion“
         if (robotState == State::Assigned && m_robotStates[robotId] == State::Available)
         {
+            qDebug() << "Transport: Robot" << robotId << "is available";
             transportFinished(robotId);
-            //ToDo
-            //update... übermittelten Stationsplatz von GW2 in roboterDB schreiben
-            updateRobotDatabase(robotId, State::Available);
-            qDebug() << "Roboter" << robotId << "ist frei";
+            updateRobotDatabase(robotId, State::Available, m_robotPlaces[robotId]);
         }
     }
 }
@@ -221,10 +215,8 @@ void Robot::charging()
         //wenn Roboterstatus „bereit zum Laden“ (Gewerk2) & (Roboterstatus (Gewerk4) =„initial“ oder "verbunden") und nicht Roboterstaus "frei" (DB)
         if (m_robotStates[robotId] == State::ReadyForCharging && (m_chargingStationStates[placeId] == State::Initial || m_chargingStationStates[placeId] == State::Connected) && robotState != State::Available)
         {
-            //ToDo
-            //update... übermittelten Stationsplatz von GW2 in roboterDB schreiben
-            updateRobotDatabase(robotId, State::ReadyForCharging);
-            qDebug() << "Roboter" << robotId << " lädt";
+            updateRobotDatabase(robotId, State::ReadyForCharging, m_robotPlaces[robotId]);
+            qDebug() << "Roboter" << robotId << " bereit zum Laden";
             robotState = State::ReadyForCharging;
         }
 
@@ -278,14 +270,14 @@ void Robot::reading(int robotId)
     if (query.next())
     {
         int stationId = query.record().value(0).toInt();
-        qDebug() << "Station, an dem der Roboter steht:" << stationId;
+        qDebug() << "Reading: RFID reader at station" << stationId << "on";
         emit rfidOn(stationId); //Turn on the RFID reader at the station
     }
 }
 
 void Robot::continueReading(int stationId, int serialNumber)
 {
-    qDebug() << "Continue reading sequence at station" << stationId << "with serial number" << serialNumber;
+    qDebug() << "Reading: Continue reading sequence at station" << stationId << "with serial number" << serialNumber;
     emit rfidOff();
     QSqlQuery query(m_database->db());
     query.prepare("SELECT rfid FROM vpj.workpiece INNER JOIN vpj.station_place ON workpiece.station_place_id = station_place.station_place_id WHERE station_place.station_id = :station_id AND workpiece.workpiece_state_id = 3");
@@ -296,12 +288,12 @@ void Robot::continueReading(int stationId, int serialNumber)
         int ratedSerialNumber = query.record().value(0).toInt();
         if (serialNumber != ratedSerialNumber)
         {
-            qDebug() << "Error: Read serial number" << serialNumber << "is not equal to rated serial number" << ratedSerialNumber << "in database!";
+            qDebug() << "Reading Error: Read serial number" << serialNumber << "is not equal to rated serial number" << ratedSerialNumber << "in database!";
             //Fehlermeldung in die DB schreiben!!!!!
             //TODO
             return;
         }
-        qDebug() << "Rated serial number:" << ratedSerialNumber;
+        qDebug() << "Reading: Rated serial number:" << ratedSerialNumber << "is ok";
         QSqlQuery query2(m_database->db());
         query2.prepare("SELECT robot_id from vpj.workpiece WHERE rfid = :rfid");
         query2.bindValue(":rfid", serialNumber);
@@ -311,6 +303,7 @@ void Robot::continueReading(int stationId, int serialNumber)
         if (query2.next())
         {
             int robotNo = query2.record().value(0).toInt();
+            qDebug() << "Reading: Robot" << robotNo << "transport workpiece with number" << serialNumber;
             emit check(robotNo);
         }
     }

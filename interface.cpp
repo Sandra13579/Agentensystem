@@ -18,8 +18,9 @@ Interface::Interface(QObject *parent)
 
 Interface::~Interface()
 {
-    m_robotPositionWriter->stop();
     disconnect(m_robotPositionWriter, &QTimer::timeout, this, &Interface::WriteRobotPositionsInDatabase);
+    m_robotPositionWriter->stop();
+    delete m_robotPositionWriter;
     m_database->Disconnect();
     delete m_database;
     m_udpSocket->close();
@@ -83,6 +84,8 @@ void Interface::WriteRobotPositionsInDatabase()
     qDebug() << "Writing position data into the database.";
     for (int i = 0; i < 4; i++)
     {
+        if (m_robotPositions.positions[i].x == 0 && m_robotPositions.positions[i].y == 0)
+            continue;
         QSqlQuery query(m_database->db());
         query.prepare("UPDATE vpj.robot SET robot_position_x = :x, robot_position_y = :y, TIMESTAMP = :timestamp WHERE robot_id = :id");
         query.bindValue(":id", i + 1);
@@ -171,7 +174,7 @@ void Interface::GetSubscriptionPayload(const QMqttMessage msg)
             State state = static_cast<State>(obj["status"].toInt(4)); //Default: 4 (Error)
             Place place = { obj["station_id"].toInt(), obj["place_id"].toInt() };
             int robotId = topicLevel[1].toInt();
-            qDebug() << "Robot state is " << state;
+            qDebug() << "Robot " << robotId << "state is " << state;
             emit robotStateChanged(robotId, state, place);
         }
     }
@@ -343,10 +346,10 @@ void Interface::PublishMqttMessage(QString topic, QString payload)
 
 QMqttSubscription *Interface::GetSubscription(QString topic)
 {
-    qDebug() << "Subscribe to topic" << topic;
     auto tmp = m_mqttClient->subscribe(QMqttTopicFilter(topic));
     connect(tmp, &QMqttSubscription::messageReceived, this, &Interface::GetSubscriptionPayload);
     connect(tmp, &QMqttSubscription::stateChanged, this, &Interface::UpdateSubscriberState);
+    qDebug() << "Subscribe to topic" << tmp->topic().filter();
     return tmp;
 }
 

@@ -16,7 +16,7 @@ void Station::updateStation()
 {
     stationRelease();
     maintenanceChargingStation();
-    //workpieceProcessing();
+    workpieceProcessing();
 }
 
 void Station::stationRelease() //Stations-/Platzfreigabe nach dem ein Roboter aus dem Weg gefahren ist
