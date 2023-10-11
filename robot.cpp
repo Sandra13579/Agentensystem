@@ -21,7 +21,6 @@ void Robot::updateRobot()
 {
     this->transport();
     this->charging();
-    this->pause();
     this->maintenance();
 }
 
@@ -93,26 +92,6 @@ void Robot::maintenance()
     }
 }
 
-void Robot::pause()
-{
-    QSqlQuery query(m_database->db());
-    //Roboter raussuchen, die nicht in Wartung sind und einen Pauseauftrag besitzen
-    query.prepare("SELECT robot_id, state_id FROM vpj.robot WHERE maintenance = 0 AND jobtype_id = 3");
-    query.exec();
-    while (query.next())
-    {
-        //Solange Roboter in Betrieb vorhanden sind
-        int robotId = query.record().value(0).toInt();
-        State robotState = static_cast<State>(query.record().value(1).toInt());
-
-        //Status = reserviert (Gewerk 2) & status = frei (DB) -> Stationsplatz aktualisieren ((10, 1) = 27), um Pausenauftrag abzuschließen
-        if (m_robotStates[robotId] == State::Reserved && robotState == State::Available)
-        {
-            updateRobotDatabase(robotId, State::Available, m_robotPlaces[robotId]);
-        }
-    }
-}
-
 void Robot::transport()
 {
     QSqlQuery query(m_database->db());
@@ -146,7 +125,7 @@ void Robot::transport()
         {
             qDebug() << "Transport: Robot" << robotId << "is ready for reading";
             reading(robotId);
-            updateRobotDatabase(robotId, State::ReadyForReading);
+            updateRobotDatabase(robotId, State::ReadyForReading, m_robotPlaces[robotId]);
         }
 
         //Roboterstatus DB = bereit zum Lesen & Roboterstatus Gewerk2 = belegt -> Roboter transportiert Werkstück
@@ -277,34 +256,37 @@ void Robot::reading(int robotId)
 
 void Robot::continueReading(int stationId, int serialNumber)
 {
-    qDebug() << "Reading: Continue reading sequence at station" << stationId << "with serial number" << serialNumber;
-    emit rfidOff();
-    QSqlQuery query(m_database->db());
-    query.prepare("SELECT rfid FROM vpj.workpiece INNER JOIN vpj.station_place ON workpiece.station_place_id = station_place.station_place_id WHERE station_place.station_id = :station_id AND workpiece.workpiece_state_id = 3");
-    query.bindValue(":station_id", stationId);
-    query.exec();
-    if (query.next())
+    if (serialNumber != 0)
     {
-        int ratedSerialNumber = query.record().value(0).toInt();
-        if (serialNumber != ratedSerialNumber)
+        qDebug() << "Reading: Continue reading sequence at station" << stationId << "with serial number" << serialNumber;
+        emit rfidOff();
+        QSqlQuery query(m_database->db());
+        query.prepare("SELECT rfid FROM vpj.workpiece INNER JOIN vpj.station_place ON workpiece.station_place_id = station_place.station_place_id WHERE station_place.station_id = :station_id AND workpiece.workpiece_state_id = 3");
+        query.bindValue(":station_id", stationId);
+        query.exec();
+        if (query.next())
         {
-            qDebug() << "Reading Error: Read serial number" << serialNumber << "is not equal to rated serial number" << ratedSerialNumber << "in database!";
-            //Fehlermeldung in die DB schreiben!!!!!
-            //TODO
-            return;
-        }
-        qDebug() << "Reading: Rated serial number:" << ratedSerialNumber << "is ok";
-        QSqlQuery query2(m_database->db());
-        query2.prepare("SELECT robot_id from vpj.workpiece WHERE rfid = :rfid");
-        query2.bindValue(":rfid", serialNumber);
-        query2.exec();
-        //Determine robot number (from DB) and initiate "checkout".
+            int ratedSerialNumber = query.record().value(0).toInt();
+            if (serialNumber != ratedSerialNumber)
+            {
+                qDebug() << "Reading Error: Read serial number" << serialNumber << "is not equal to rated serial number" << ratedSerialNumber << "in database!";
+                //Fehlermeldung in die DB schreiben!!!!!
+                //TODO
+                return;
+            }
+            qDebug() << "Reading: Rated serial number:" << ratedSerialNumber << "is ok";
+            QSqlQuery query2(m_database->db());
+            query2.prepare("SELECT robot_id from vpj.workpiece WHERE rfid = :rfid");
+            query2.bindValue(":rfid", serialNumber);
+            query2.exec();
+            //Determine robot number (from DB) and initiate "checkout".
 
-        if (query2.next())
-        {
-            int robotNo = query2.record().value(0).toInt();
-            qDebug() << "Reading: Robot" << robotNo << "transport workpiece with number" << serialNumber;
-            emit check(robotNo);
+            if (query2.next())
+            {
+                int robotNo = query2.record().value(0).toInt();
+                qDebug() << "Reading: Robot" << robotNo << "transport workpiece with number" << serialNumber;
+                emit check(robotNo);
+            }
         }
     }
 }

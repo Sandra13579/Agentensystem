@@ -51,7 +51,6 @@ private:
     void transportFinished(int robotId);
     void ladevorgang(int robotId);
 
-    void pause();
     void transport();
     void charging();
     void maintenance();

@@ -17,7 +17,7 @@ int main(int argc, char *argv[])
     //Interface initialization
     Interface *interface = new Interface(&a);
     interface->StartUdpListening(25000);
-    interface->ConnectToBroker("127.0.0.1", 1883);
+    interface->ConnectToBroker("192.168.0.11", 1883);
     //QObject::connect(interface, &Interface::disconnected, &a, QCoreApplication::quit);
 
     //Dispatcher agent initialization

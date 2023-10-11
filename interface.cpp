@@ -187,7 +187,7 @@ void Interface::GetSubscriptionPayload(const QMqttMessage msg)
     //Reading serial number from RFID tag
     else if (topicLevel[0] == "RFID" && topicLevel[3] == "Read")
     {
-        int serialNumber = obj["serial_number"].toInt(-1);
+        int serialNumber = obj["serial_number"].toInt();
         int stationId = topicLevel[2].toInt();
         qDebug() << "Read serial number" << serialNumber << "from RFID Station" << stationId;
         emit serialNumberRead(stationId, serialNumber);
