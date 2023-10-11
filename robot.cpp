@@ -159,13 +159,21 @@ void Robot::charging()
         State robotState = static_cast<State>(query.record().value(1).toInt());
         int placeId = m_robotPlaces[robotId].placeId;
 
-        /*
-            Fehler
-            wenn Roboterstatus „bereit zum Laden“ (Gewerk2) & (Roboterstatus =„initial“ oder NULL) (Gewerk4)
-            - dann vergleich zeitstempel Robotertabelle DB mit aktueller Zeit
-            wenn Zeitdifferenz > max Verzögerungszeit
-            - dann Fehler: Roboterstatus „Fehler“ in DB
-        */
+        //Roboterstatus DB = frei & Roboterstatus Gewerk 2 = reserviert -> Roboter hat Auftrag erhalten
+        if (robotState == State::Available && m_robotStates[robotId] == State::Reserved)
+        {
+            //Roboter reservieren
+            qDebug() << "Charging: Robot" << robotId << "is reserved";
+            updateRobotDatabase(robotId, State::Reserved);
+        }
+
+        //wenn Roboterstatus „bereit zum Laden“ (Gewerk2) & (Roboterstatus (Gewerk4) =„initial“ oder "verbunden") und Roboterstaus "reserviert" (DB)
+        if (m_robotStates[robotId] == State::ReadyForCharging && (m_chargingStationStates[placeId] == State::Initial || m_chargingStationStates[placeId] == State::Connected) && robotState == State::Reserved)
+        {
+            qDebug() << "Charging: Roboter" << robotId << " bereit zum Laden";
+            robotState = State::ReadyForCharging;
+            updateRobotDatabase(robotId, State::ReadyForCharging, m_robotPlaces[robotId]);
+        }
 
         //wenn Roboterstatus „bereit zum Laden“ (Gewerk2) & (Roboterstatus (Gewerk4) =„initial“ oder NULL)
         if (m_robotStates[robotId] == State::ReadyForCharging && m_chargingStationStates[placeId] == State::Initial)
@@ -182,59 +190,50 @@ void Robot::charging()
                 if (clearingTimeVariant.isValid() && clearingTimeVariant.canConvert<QDateTime>())
                 {
                     QDateTime clearingTime = clearingTimeVariant.toDateTime();
+
+                    //qDebug() << "Timestamp DB:" << clearingTime;
+                    //qDebug() << "Timestamp Programm:" << QDateTime::currentDateTime();
                     if (clearingTime.secsTo(QDateTime::currentDateTime()) > maxDelay)
                     {
-                        qDebug() << "Fehler beim Verbinden der Ladestation mit dem Roboter" << placeId;
+                        qDebug() << "Charging: Fehler beim Verbinden der Ladestation mit dem Roboter" << placeId;
                         updateRobotDatabase(robotId, State::Fault);
                     }
                 }
             }
         }
 
-        //wenn Roboterstatus „bereit zum Laden“ (Gewerk2) & (Roboterstatus (Gewerk4) =„initial“ oder "verbunden") und nicht Roboterstaus "frei" (DB)
-        if (m_robotStates[robotId] == State::ReadyForCharging && (m_chargingStationStates[placeId] == State::Initial || m_chargingStationStates[placeId] == State::Connected) && robotState != State::Available)
-        {
-            updateRobotDatabase(robotId, State::ReadyForCharging, m_robotPlaces[robotId]);
-            qDebug() << "Roboter" << robotId << " bereit zum Laden";
-            robotState = State::ReadyForCharging;
-        }
-
         //roboterstatus = bereit zum Laden (DB) und Ladestation = verbunden (Gewerk 4)
         if (robotState == State::ReadyForCharging && m_chargingStationStates[placeId] == State::Connected)
         {
-            //nur bei Statusänderung
-            if (m_robotStates[robotId] != robotState)
-            {
-                updateRobotDatabase(robotId, State::Connected);
-                qDebug() << "Roboter" << robotId << " ist mit Ladestation" << placeId << "verbunden";
-                QSqlQuery query(m_database->db());
-                //query.prepare("UPDATE vpj.station_place SET state_id = 1 WHERE station_place_id = (SELECT station_place_id FROM vpj.robot WHERE robot_id = :robot_id) AND state_id <> 1");
-                query.prepare("UPDATE vpj.station_place SET state_id = 1 WHERE station_id = 9 AND place_id = :place_id AND state_id <> 1");
-                query.bindValue(":place_id", placeId);
-                query.exec();
-                emit charge(true, placeId);
-                qDebug() << "Ladevorgang wird gestartet";
-            }
+            updateRobotDatabase(robotId, State::Connected);
+            qDebug() << "Charging: Roboter" << robotId << " ist mit Ladestation" << placeId << "verbunden";
+            QSqlQuery query(m_database->db());
+            //query.prepare("UPDATE vpj.station_place SET state_id = 1 WHERE station_place_id = (SELECT station_place_id FROM vpj.robot WHERE robot_id = :robot_id) AND state_id <> 1");
+            query.prepare("UPDATE vpj.station_place SET state_id = 1 WHERE station_id = 9 AND place_id = :place_id AND state_id <> 1");
+            query.bindValue(":place_id", placeId);
+            query.exec();
+            emit charge(true, placeId);
+            qDebug() << "Charging: Ladevorgang wird gestartet";
         }
 
         //jetzt wird geladen status = laden (Gewerk4) und status = bereit zum laden (Gewerk2)
         if (m_robotStates[robotId] == State::ReadyForCharging && m_chargingStationStates[placeId] == State::Charging)
         {
-            if (m_robotStates[robotId] != robotState)
+            if (robotState != State::Charging)
             {
                 updateRobotDatabase(robotId, State::Charging);
-                qDebug() << "Roboter" << robotId << " lädt";
+                qDebug() << "Charging: Roboter" << robotId << " lädt";
             }
         }
 
         //fertig geladen status = frei (Gewerk4) und status = bereit zum laden (Gewerk2)
         if (m_robotStates[robotId] == State::ReadyForCharging && m_chargingStationStates[placeId] == State::Available)
         {
-            if (m_robotStates[robotId] != robotState)
+            if (robotState != State::Available)
             {
                 updateRobotDatabase(robotId, State::Available);
                 m_chargingStationStates[placeId] = State::Initial; //<- statt publish s.o.
-                qDebug() << "Ladevorgang für Roboter" << robotId << "an Ladestation" << placeId << "beendet";
+                qDebug() << "Charging: Ladevorgang für Roboter" << robotId << "an Ladestation" << placeId << "beendet";
             }
         }
     }

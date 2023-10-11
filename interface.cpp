@@ -85,11 +85,10 @@ void Interface::WriteRobotPositionsInDatabase()
         if (m_robotPositions.positions[i].x == 0 && m_robotPositions.positions[i].y == 0)
             continue;
         QSqlQuery query(m_database->db());
-        query.prepare("UPDATE vpj.robot SET robot_position_x = :x, robot_position_y = :y, TIMESTAMP = :timestamp WHERE robot_id = :id");
+        query.prepare("UPDATE vpj.robot SET robot_position_x = :x, robot_position_y = :y WHERE robot_id = :id");
         query.bindValue(":id", i + 1);
         query.bindValue(":x", m_robotPositions.positions[i].x);
         query.bindValue(":y", m_robotPositions.positions[i].y);
-        query.bindValue(":timestamp", QDate::currentDate().toString("yyyy-MM-dd") + " " + m_robotPositions.timestamp);
         query.exec();
     }
     m_positionDataAvailable = false;
