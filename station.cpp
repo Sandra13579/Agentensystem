@@ -62,9 +62,7 @@ void Station::stationRelease() //Stations-/Platzfreigabe nach dem ein Roboter au
                 query2.prepare("UPDATE vpj.station_place SET state_id = 0, clearing_time = NULL WHERE station_place_id = :station_place_id;");
                 query2.bindValue(":station_place_id", query.record().value(1).toInt());
                 query2.exec();
-                query2.prepare("INSERT INTO vpj.station_place_history (state_id, station_place_id) SELECT state_id, station_place_id FROM vpj.station_place WHERE station_place_id = :station_place_id; ");
-                query2.bindValue(":station_place_id", query.record().value(1).toInt());
-                query2.exec();
+                updateStationPlaceHistory(database->db(), query.record().value(1).toInt());
             }
         }
     }
@@ -83,9 +81,7 @@ void Station::maintenanceChargingStation()
         query2.prepare("UPDATE vpj.station_place SET state_id = 3 WHERE station_place_id = :station_place_id;");
         query2.bindValue(":station_place_id", query.record().value(0).toInt());
         query2.exec();
-        query2.prepare("INSERT INTO vpj.station_place_history (state_id, station_place_id) SELECT state_id, station_place_id FROM vpj.station_place WHERE station_place_id = :station_place_id; ");
-        query2.bindValue(":station_place_id", query.record().value(0).toInt());
-        query.exec();
+        updateStationPlaceHistory(database->db(), query.record().value(0).toInt());
     }
 
     //Ladestationen aus Wartung herausholen
@@ -98,9 +94,7 @@ void Station::maintenanceChargingStation()
         query2.prepare("UPDATE vpj.station_place SET state_id = 0 WHERE station_place_id = :station_place_id;");
         query2.bindValue(":station_place_id", query.record().value(0).toInt());
         query.exec();
-        query2.prepare("INSERT INTO vpj.station_place_history (state_id, station_place_id) SELECT state_id, station_place_id FROM vpj.station_place WHERE station_place_id = :station_place_id; ");
-        query2.bindValue(":station_place_id", query.record().value(0).toInt());
-        query.exec();
+        updateStationPlaceHistory(database->db(), query.record().value(0).toInt());
     }
 }
 
@@ -120,9 +114,7 @@ void Station::workpieceProcessing() //Überprüfung der Werkstückbearbeitungsze
             query2.prepare("UPDATE vpj.workpiece SET workpiece_id = 0 WHERE workpiece_id = :workpiece_id;");
             query2.bindValue(":workpiece_id", query.record().value(0).toInt());
             query2.exec();
-            query2.prepare("INSERT INTO vpj.workpiece_history (rfid, current_step_duration, workpiece_state_id, workpiece_id, robot_id, station_place_id, production_order_id, step_id, production_process_id) SELECT rfid, current_step_duration, workpiece_state_id, workpiece_id, robot_id, station_place_id, production_order_id, step_id, production_process_id FROM vpj.workpiece WHERE workpiece_id = :workpiece_id; ");
-            query2.bindValue(":workpiece_id", query.record().value(0).toInt());
-            query2.exec();
+            updateWorkpieceHistory(database->db(), query.record().value(0).toInt());
         }
         else
         {
@@ -143,9 +135,7 @@ void Station::workpieceProcessing() //Überprüfung der Werkstückbearbeitungsze
                     query3.prepare("UPDATE vpj.workpiece SET workpiece_state_id = 1 WHERE workpiece_id = :workpiece_id;");
                     query3.bindValue(":workpiece_id", query.record().value(0).toInt());
                     query3.exec();
-                    query3.prepare("INSERT INTO vpj.workpiece_history (rfid, current_step_duration, workpiece_state_id, workpiece_id, robot_id, station_place_id, production_order_id, step_id, production_process_id) SELECT rfid, current_step_duration, workpiece_state_id, workpiece_id, robot_id, station_place_id, production_order_id, step_id, production_process_id FROM vpj.workpiece WHERE workpiece_id = :workpiece_id; ");
-                    query3.bindValue(":workpiece_id", query.record().value(0).toInt());
-                    query3.exec();
+                    updateWorkpieceHistory(database->db(), query.record().value(0).toInt());
                 }
             }
         }

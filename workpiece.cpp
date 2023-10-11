@@ -55,9 +55,7 @@ void Workpiece::orderAllocation()
             query3.bindValue(":production_process_id", productionProcessId);
             query3.bindValue(":workpiece_id", workpieceId);
             query3.exec();
-            query3.prepare("INSERT INTO vpj.workpiece_history (rfid, current_step_duration, workpiece_state_id, workpiece_id, robot_id, station_place_id, production_order_id, step_id, production_process_id) SELECT rfid, current_step_duration, workpiece_state_id, workpiece_id, robot_id, station_place_id, production_order_id, step_id, production_process_id FROM vpj.workpiece WHERE workpiece_id = :workpiece_id; ");
-            query3.bindValue(":workpiece_id", workpieceId);
-            query3.exec();
+            updateWorkpieceHistory(database->db(), workpieceId);
         }
     }
 }

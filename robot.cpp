@@ -50,6 +50,8 @@ void Robot::updateRobotDatabase(int robotId, State state)
     query.bindValue(":robot_id", robotId);
     query.bindValue(":state_id", static_cast<int>(state));
     query.exec();
+
+    updateRobotHistory(m_database->db(), robotId);
 }
 
 //Update robots state and station place in DB
@@ -62,6 +64,8 @@ void Robot::updateRobotDatabase(int robotId, State state, Place place)
     query.bindValue(":station_id", place.stationId);
     query.bindValue(":place_id", place.placeId);
     query.exec();
+
+    updateRobotHistory(m_database->db(), robotId);
 }
 
 void Robot::maintenance()
@@ -175,8 +179,8 @@ void Robot::charging()
             updateRobotDatabase(robotId, State::ReadyForCharging, m_robotPlaces[robotId]);
         }
 
-        //wenn Roboterstatus „bereit zum Laden“ (Gewerk2) & (Roboterstatus (Gewerk4) =„initial“ oder NULL)
-        if (m_robotStates[robotId] == State::ReadyForCharging && m_chargingStationStates[placeId] == State::Initial)
+        //wenn Roboterstatus „bereit zum Laden“ (Gewerk2) & (Roboterstatus (Gewerk4) =„initial“ oder NULL) & Roboterstatus = "kein Fehler" (DB)
+        if (m_robotStates[robotId] == State::ReadyForCharging && m_chargingStationStates[placeId] == State::Initial && robotState != State::Fault)
         {
             int maxDelay = 30;
 
@@ -300,7 +304,7 @@ void Robot::checking(int robotId)
     {
         int checkedIn = query.record().value(0).toInt();
         int workpieceId = query.record().value(1).toInt();
-        qDebug() << "Checked in:" << checkedIn << "Workpiece ID:" << workpieceId;
+        //qDebug() << "Checked in:" << checkedIn << "Workpiece ID:" << workpieceId;
 
         if (checkedIn == 1)
         {

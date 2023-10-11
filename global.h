@@ -3,6 +3,8 @@
 
 #include <QList>
 #include <QDebug>
+#include <QSqlDatabase>
+#include <QSqlQuery>
 
 enum class JobType
 {
@@ -96,6 +98,30 @@ inline QDebug operator<<(QDebug debug, const State state) {
         break;
     }
     return debug;
+}
+
+inline void updateRobotHistory(QSqlDatabase db, int robotId)
+{
+    QSqlQuery query(db);
+    query.prepare("INSERT INTO vpj.robot_history (robot_position_x, robot_position_y, battery_level, station_place_id, jobtype_id ,state_id, robot_id) SELECT robot_position_x, robot_position_y, battery_level, station_place_id, jobtype_id ,state_id, robot_id FROM vpj.robot WHERE robot_id = :robot_id; ");
+    query.bindValue(":robot_id", robotId);
+    query.exec();
+}
+
+inline void updateWorkpieceHistory(QSqlDatabase db, int workpieceId)
+{
+    QSqlQuery query(db);
+    query.prepare("INSERT INTO vpj.workpiece_history (rfid, current_step_duration, workpiece_state_id, workpiece_id, robot_id, station_place_id, production_order_id, step_id, production_process_id) SELECT rfid, current_step_duration, workpiece_state_id, workpiece_id, robot_id, station_place_id, production_order_id, step_id, production_process_id FROM vpj.workpiece WHERE workpiece_id = :workpiece_id; ");
+    query.bindValue(":workpiece_id", workpieceId);
+    query.exec();
+}
+
+inline void updateStationPlaceHistory(QSqlDatabase db, int stationPlaceId)
+{
+    QSqlQuery query(db);
+    query.prepare("INSERT INTO vpj.station_place_history (state_id, station_place_id) SELECT state_id, station_place_id FROM vpj.station_place WHERE station_place_id = :station_place_id");
+    query.bindValue(":station_place_id", stationPlaceId);
+    query.exec();
 }
 
 #endif // GLOBAL_H

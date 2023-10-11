@@ -6,6 +6,7 @@
 #include <QSqlIndex>
 #include <QDateTime>
 
+#include "global.h"
 #include "database.h"
 
 class Station : public QObject

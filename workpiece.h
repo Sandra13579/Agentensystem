@@ -5,6 +5,7 @@
 #include <QSqlQuery>
 #include <QSqlIndex>
 
+#include "global.h"
 #include "database.h"
 
 class Workpiece : public QObject
