@@ -17,7 +17,7 @@ void Dispatcher::updateJobtype()
     this->maintenace();
     this->charging();
     this->breakAfterJob();
-    //this->transport();
+    this->transport();
 }
 
 void Dispatcher::maintenace()

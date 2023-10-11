@@ -80,8 +80,6 @@ void Interface::WriteRobotPositionsInDatabase()
 {
     if (!m_positionDataAvailable)
         return;
-
-    qDebug() << "Writing position data into the database.";
     for (int i = 0; i < 4; i++)
     {
         if (m_robotPositions.positions[i].x == 0 && m_robotPositions.positions[i].y == 0)
