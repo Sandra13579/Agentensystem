@@ -108,6 +108,11 @@ void Robot::transport()
         int robotId = query.record().value(0).toInt();
         State robotState = static_cast<State>(query.record().value(1).toInt());
 
+        if (m_robotStates[robotId] == State::Fault && robotState != State::Fault && robotState != State::Available)
+        {
+            updateRobotDatabase(robotId, State::Fault);
+        }
+
         //Roboterstatus DB = frei & Roboterstatus Gewerk 2 = reserviert -> Roboter hat Auftrag erhalten
         if (robotState == State::Available && m_robotStates[robotId] == State::Reserved)
         {
@@ -273,8 +278,11 @@ void Robot::continueReading(int stationId, int serialNumber)
             if (serialNumber != ratedSerialNumber)
             {
                 qDebug() << "Reading Error: Read serial number" << serialNumber << "is not equal to rated serial number" << ratedSerialNumber << "in database!";
-                //Fehlermeldung in die DB schreiben!!!!!
-                //TODO
+                //Write fault state into database
+                QSqlQuery query2(m_database->db());
+                query2.prepare("UPDATE vpj.station SET state_id = 4 WHERE station_id = :station_id");
+                query2.bindValue(":station_id", stationId);
+                query2.exec();
                 return;
             }
             qDebug() << "Reading: Rated serial number:" << ratedSerialNumber << "is ok";

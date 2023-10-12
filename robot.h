@@ -15,15 +15,13 @@ class Robot : public QObject
     Q_OBJECT
 public:
     explicit Robot(QObject *parent = nullptr);
-    //Dispatcher();
-    void updateRobot();
     ~Robot();
 
 public slots:
+    void updateRobot();
 
     void updateRobotStatus(int robotId, State state, Place place);
     void updateChargingStationStatus(int stationId, State state);
-
     void continueReading(int stationId, int serialNumber); //Slot -> nach der RFID-Leseanfrage vom Agenten wird diese Funktion aufgerufen,
         //wenn die Seriennummer vom RFID Chip eingelesen und übermittelt wurde ->asynchron ohne "while (wait)"!!!
 
