@@ -11,7 +11,12 @@ Interface::Interface(QObject *parent)
     m_database = new Database("Interface");
     m_database->Connect();
 
-    m_robotPositionWriter->start(1000);
+    for (int i = 0; i < 8; ++i) {
+        Position pos;
+        m_oldRobotPositions.append(pos);
+    }
+
+    m_robotPositionWriter->start(15);
 
     //QTimer::singleShot(3000, this, &Interface::SendTest);
 }
@@ -84,13 +89,22 @@ void Interface::WriteRobotPositionsInDatabase()
     {
         if (m_robotPositions.positions[i].x == 0 && m_robotPositions.positions[i].y == 0)
             continue;
+        double e = m_robotPositions.positions[i].e;
+
+        //If new pos - old pos < e
+        if (m_robotPositions.positions[i].x - m_oldRobotPositions[i].x < e &&
+            m_robotPositions.positions[i].y - m_oldRobotPositions[i].y < e)
+        {
+            break;
+        }
         QSqlQuery query(m_database->db());
         query.prepare("UPDATE vpj.robot SET robot_position_x = :x, robot_position_y = :y WHERE robot_id = :id");
         query.bindValue(":id", i + 1);
-        query.bindValue(":x", m_robotPositions.positions[i].x);
-        query.bindValue(":y", m_robotPositions.positions[i].y);
+        query.bindValue(":x", QString::number(m_robotPositions.positions[i].x, 'f', 2));
+        query.bindValue(":y", QString::number(m_robotPositions.positions[i].y, 'f', 2));
         query.exec();
     }
+    m_oldRobotPositions = m_robotPositions.positions;
     m_positionDataAvailable = false;
 }
 

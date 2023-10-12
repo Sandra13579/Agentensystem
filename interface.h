@@ -11,6 +11,7 @@
 #include <QSqlRecord>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QtMath>
 
 #include "global.h"
 #include "database.h"
@@ -58,6 +59,7 @@ private:
     //UDP
     QUdpSocket *m_udpSocket;
     RobotPositions m_robotPositions;
+    QList<Position> m_oldRobotPositions;
     bool m_positionDataAvailable = false;
 
     //UDP payload parse methods
