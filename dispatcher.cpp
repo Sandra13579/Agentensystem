@@ -306,9 +306,10 @@ void Dispatcher::transport()
                         updateRobotHistory(database->db(), robotId);
 
                         //Werkstücktabelle + History aktualisieren
-                        query3.prepare("UPDATE vpj.workpiece SET current_step_duration = :current_step_duration, destination_station_place_id =  :destination_station_place_id, workpiece_state_id = 3, robot_id = :robot_id, step_id = :step_id WHERE workpiece_id = :workpiece_id;");
+                        query3.prepare("UPDATE vpj.workpiece SET current_step_duration = :current_step_duration, destination_station_place_id =  :destination_station_place_id, start_station_place_id =  :start_station_place_id, workpiece_state_id = 3, robot_id = :robot_id, step_id = :step_id WHERE workpiece_id = :workpiece_id;");
                         query3.bindValue(":current_step_duration", step_duration);
                         query3.bindValue(":destination_station_place_id", destination_station_place_id);
+                        query3.bindValue(":start_station_place_id", start_station_place_id);
                         query3.bindValue(":robot_id", robotId);
                         query3.bindValue(":step_id", step_id);
                         query3.bindValue(":workpiece_id", workpiece_id);
