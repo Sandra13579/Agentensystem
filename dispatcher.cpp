@@ -14,16 +14,79 @@ Dispatcher::~Dispatcher()
 
 void Dispatcher::updateJobtype()
 {
+    this->breakAfterJob();
     this->maintenace();
     this->charging();
-    this->breakAfterJob();
     this->transport();
+}
+
+void Dispatcher::breakAfterJob()
+{
+    //Pause - nach Transport
+    QSqlQuery query(database->db());
+    query.prepare("SELECT station.station_id, robot.station_place_id, robot.robot_id FROM vpj.robot JOIN vpj.station_place ON robot.station_place_id = station_place.station_place_id JOIN vpj.station ON station_place.station_id = station.station_id WHERE robot.state_id = 0 AND station.state_id = 1;");
+    query.exec();
+    while (query.next())
+    {
+        if (query.record().value(0).toInt() < 9)
+        {
+            publishBreak(query.record().value(0).toInt(),query.record().value(1).toInt(), query.record().value(2).toInt());
+        }
+    }
+    //Pause - nach Laden
+    query.prepare("SELECT robot.station_place_id, robot.robot_id FROM vpj.robot JOIN vpj.station_place ON robot.station_place_id = station_place.station_place_id WHERE robot.state_id = 0 AND station_place.state_id = 1 AND (station_place.station_place_id = 25 OR station_place.station_place_id = 26);");
+    query.exec();
+    while (query.next())
+    {
+        int stationPlaceId = query.record().value(0).toInt();
+        int robotId = query.record().value(1).toInt();
+        qDebug() << "Roboter" << robotId << "an Station" << stationPlaceId << "zur Pause schicken";
+        publishBreak(9, stationPlaceId, robotId);
+    }
+}
+
+void Dispatcher::publishBreak(int stationId, int stationPlaceId, int robotId)
+{
+    QSqlQuery query(database->db());
+
+    // publish Pausenauftrag (jobtype = 3, destination{station=10,place_id=1}) an robot_id
+    Job job(JobType::Pause);
+    job.start = {0, 0};
+    job.destination = {10, 1};
+    emit sendJob(job, robotId); // instruct to send a job (MQTT)
+
+    if (stationId != 9) //Pause nach Transport
+    {
+        //qDebug() << "nach trans: publish stat_id " << station_id << ", place " << station_place_id << ", rob_id " << robot_id;
+        //Station aktualisieren
+        query.prepare("UPDATE vpj.station SET clearing_time = NOW() WHERE station_id = :station_id;");
+        query.bindValue(":station_id", stationId);
+        query.exec();
+    }
+    else //Pause nach Laden
+    {
+        qDebug() << "Pause nach Laden";
+        //qDebug() << "nach load: publish stat_id " << station_id << ", place " << station_place_id << ", rob_id " << robot_id;
+        //Stationsplatz + Historie aktualisieren
+        query.prepare("UPDATE vpj.station_place SET clearing_time = NOW() WHERE station_place_id = :station_place_id;");
+        query.bindValue(":station_place_id", stationPlaceId);
+        query.exec();
+        query.prepare("INSERT INTO vpj.station_place_history (state_id, station_place_id) SELECT state_id, station_place_id FROM vpj.station_place WHERE station_place_id = :station_place_id; ");
+        query.bindValue(":station_place_id", stationPlaceId);
+        query.exec();
+    }
+
+    //robotertabelle aktualisieren
+    query.prepare("UPDATE vpj.robot SET jobtype_id = 3, station_place_id = 27 WHERE robot_id = :robot_id;");
+    query.bindValue(":robot_id", robotId);
+    query.exec();
+    updateRobotHistory(database->db(), robotId);
 }
 
 void Dispatcher::maintenace()
 {
     QSqlQuery query(database->db());
-    query.prepare("SELECT robot_id FROM vpj.robot WHERE state_id = 0 AND maintenance = 1 AND jobtype_id != 2");
+    query.prepare("SELECT robot_id FROM vpj.robot WHERE state_id = 0 AND maintenance = 1 AND jobtype_id = 3");
     query.exec();
     while(query.next())
     {
@@ -92,68 +155,6 @@ void Dispatcher::charging()
     }
 }
 
-void Dispatcher::breakAfterJob()
-{
-    //Pause - nach Transport
-    QSqlQuery query(database->db());
-    query.prepare("SELECT station.station_id, robot.station_place_id, robot.robot_id FROM vpj.robot JOIN vpj.station_place ON robot.station_place_id = station_place.station_place_id JOIN vpj.station ON station_place.station_id = station.station_id WHERE robot.state_id = 0 AND station.state_id = 1;");
-    query.exec();
-    while (query.next())
-    {
-        if (query.record().value(0).toInt() < 9)
-        {
-            publishBreak(query.record().value(0).toInt(),query.record().value(1).toInt(), query.record().value(2).toInt());
-        }
-    }
-    //Pause - nach Laden
-    query.prepare("SELECT robot.station_place_id, robot.robot_id FROM vpj.robot JOIN vpj.station_place ON robot.station_place_id = station_place.station_place_id WHERE robot.state_id = 0 AND station_place.state_id = 1 AND (station_place.station_place_id = 25 OR station_place.station_place_id = 26);");
-    query.exec();
-    while (query.next())
-    {
-        int stationPlaceId = query.record().value(0).toInt();
-        int robotId = query.record().value(1).toInt();
-        qDebug() << "Roboter" << robotId << "an Station" << stationPlaceId << "zur Pause schicken";
-        publishBreak(9, stationPlaceId, robotId);
-    }
-}
-
-void Dispatcher::publishBreak(int stationId, int stationPlaceId, int robotId)
-{
-    QSqlQuery query(database->db());
-
-    // publish Pausenauftrag (jobtype = 3, destination{station=10,place_id=1}) an robot_id
-    Job job(JobType::Pause);
-    job.start = {0, 0};
-    job.destination = {10, 1};
-    emit sendJob(job, robotId); // instruct to send a job (MQTT)
-
-    if (stationId != 9) //Pause nach Transport
-    {
-        //qDebug() << "nach trans: publish stat_id " << station_id << ", place " << station_place_id << ", rob_id " << robot_id;
-        //Station aktualisieren
-        query.prepare("UPDATE vpj.station SET clearing_time = NOW() WHERE station_id = :station_id;");
-        query.bindValue(":station_id", stationId);
-        query.exec();
-    }
-    else //Pause nach Laden
-    {
-        qDebug() << "Pause nach Laden";
-        //qDebug() << "nach load: publish stat_id " << station_id << ", place " << station_place_id << ", rob_id " << robot_id;
-        //Stationsplatz + Historie aktualisieren
-        query.prepare("UPDATE vpj.station_place SET clearing_time = NOW() WHERE station_place_id = :station_place_id;");
-        query.bindValue(":station_place_id", stationPlaceId);
-        query.exec();
-        query.prepare("INSERT INTO vpj.station_place_history (state_id, station_place_id) SELECT state_id, station_place_id FROM vpj.station_place WHERE station_place_id = :station_place_id; ");
-        query.bindValue(":station_place_id", stationPlaceId);
-        query.exec();
-    }
-
-    //robotertabelle aktualisieren
-    query.prepare("UPDATE vpj.robot SET jobtype_id = 3, station_place_id = 27 WHERE robot_id = :robot_id;");
-    query.bindValue(":robot_id", robotId);
-    query.exec();
-    updateRobotHistory(database->db(), robotId);
-}
 
 void Dispatcher::transport()
 {
