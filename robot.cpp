@@ -176,15 +176,15 @@ void Robot::charging()
             updateRobotDatabase(robotId, State::Reserved);
         }
 
-        //wenn Roboterstatus „bereit zum Laden“ (Gewerk2) & (Roboterstatus (Gewerk4) =„initial“ oder "verbunden") und Roboterstaus "reserviert" (DB)
-        if (m_robotStates[robotId] == State::ReadyForCharging && (m_chargingStationStates[placeId] == State::Initial || m_chargingStationStates[placeId] == State::Connected) && robotState == State::Reserved)
+        //wenn Roboterstatus „bereit zum Laden“ (Gewerk2) & Roboterstaus "reserviert" (DB)
+        if (m_robotStates[robotId] == State::ReadyForCharging && robotState == State::Reserved)
         {
             qDebug() << "Charging: Roboter" << robotId << " bereit zum Laden";
             robotState = State::ReadyForCharging;
             updateRobotDatabase(robotId, State::ReadyForCharging, m_robotPlaces[robotId]);
         }
 
-        //wenn Roboterstatus „bereit zum Laden“ (Gewerk2) & (Roboterstatus (Gewerk4) =„initial“ oder NULL) & Roboterstatus = "kein Fehler" (DB)
+        //wenn Roboterstatus „bereit zum Laden“ (Gewerk2) & (Roboterstatus (Gewerk4) =„initial") & Roboterstatus = "kein Fehler" (DB)
         if (m_robotStates[robotId] == State::ReadyForCharging && m_chargingStationStates[placeId] == State::Initial && robotState != State::Fault)
         {
             int maxDelay = 30;
@@ -335,6 +335,7 @@ void Robot::checking(int robotId)
                     query3.prepare("UPDATE vpj.station_place SET state_id = 3 WHERE station_place_id = :station_place_id");
                     query3.bindValue(":station_place_id", stationPlaceId);
                     query3.exec();
+                    //TODO Historie
                 }
                 else
                 {
@@ -342,15 +343,18 @@ void Robot::checking(int robotId)
                     query3.prepare("UPDATE vpj.station_place SET state_id = 0 WHERE station_place_id = :station_place_id");
                     query3.bindValue(":station_place_id", stationPlaceId);
                     query3.exec();
+                    //TODO Historie
                 }
                 //Station vorbereiten für Freigabe
                 query3.prepare("UPDATE vpj.station SET clearing_time = NOW(), state_id = 1 WHERE station_id = :station_id");
                 query3.bindValue(":station_id", stationId);
                 query3.exec();
+
                 //Werkstücktabelle aktualisieren, ausgecheckt
                 query3.prepare("UPDATE vpj.workpiece SET checked_in = 0, station_place_id = ( SELECT destination_station_place_id FROM vpj.workpiece WHERE workpiece_id = :workpiece_id ) WHERE workpiece_id = :workpiece_id");
                 query3.bindValue(":workpiece_id", workpieceId);
                 query3.exec();
+                //TODO Historie
             }
         }
         else
@@ -361,6 +365,7 @@ void Robot::checking(int robotId)
             query2.prepare("UPDATE vpj.workpiece SET checked_in = 1 WHERE workpiece_id = (SELECT workpiece_id FROM vpj.workpiece WHERE robot_id = :robot_id)");
             query2.bindValue("robot_id", robotId);
             query2.exec();
+            //TODO Historie
         }
     }
 }
@@ -369,7 +374,7 @@ void Robot::transportFinished(int robotId)
 {
     //Station vorbereiten für Freigabe
     QSqlQuery query(m_database->db());
-    query.prepare("UPDATE vpj.station SET state_id = 1 WHERE station_id = ( SELECT sp.station_id FROM vpj.robot r INNER JOIN vpj.station_place sp ON r.station_place_id = sp.station_place_id WHERE r.robot_id = :robot_id)");
+    query.prepare("UPDATE vpj.station SET clearing_time = NOW(), state_id = 1 WHERE station_id = ( SELECT sp.station_id FROM vpj.robot r INNER JOIN vpj.station_place sp ON r.station_place_id = sp.station_place_id WHERE r.robot_id = :robot_id)");
     query.bindValue(":robot_id", robotId);
     query.exec();
 
@@ -377,9 +382,11 @@ void Robot::transportFinished(int robotId)
     query.prepare("UPDATE vpj.station_place SET state_id = 1 WHERE station_place_id = ( SELECT station_place_id FROM vpj.workpiece WHERE robot_id = :robot_id)");
     query.bindValue(":robot_id", robotId);
     query.exec();
+    //TODO Historie
 
     //Werkstück in Bearbeitung setzen
     query.prepare("UPDATE vpj.workpiece SET timestamp = NOW(), workpiece_state_id = 2, robot_id = NULL WHERE workpiece_id = (SELECT workpiece_id FROM vpj.workpiece WHERE robot_id = :robot_id)");
     query.bindValue(":robot_id", robotId);
     query.exec();
+    //TODO Historie
 }

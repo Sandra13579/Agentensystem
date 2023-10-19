@@ -211,7 +211,7 @@ void Dispatcher::transport()
                 destinationStationId = query5.record().value(0).toInt();
                 step_duration = query5.record().value(1).toInt();
             }
-            if (query4.record().value(0).toInt() == 5) // wenn nächste Schritt_id eine Fertigteillager
+            else // wenn nächste Schritt_id eine Fertigteillager
             {
                 destinationStationId = 7;
                 alternative_destination_station_id = 8;
