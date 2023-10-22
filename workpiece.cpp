@@ -21,9 +21,9 @@ void Workpiece::updateOrder()
 //Werkstück - Auftragszuordnung
 void Workpiece::orderAllocation()
 {
-    // Such nach freiem, nicht zugeordnetem Werkstück zu Auftrag, mit ältestem Zeitstempel
+    // Such nach freiem, nicht zugeordnetem Werkstück zu Auftrag, mit ältestem Zeitstempel, die nicht fehlerhaft sind
     QSqlQuery query(database->db());
-    query.prepare("SELECT workpiece_id FROM vpj.workpiece WHERE production_order_id IS NULL ORDER BY TIMESTAMP ASC LIMIT 1");
+    query.prepare("SELECT workpiece_id FROM vpj.workpiece WHERE production_order_id IS NULL AND workpiece_state_id != 6 ORDER BY TIMESTAMP ASC LIMIT 1");
     query.exec();
     if(query.next())
     {

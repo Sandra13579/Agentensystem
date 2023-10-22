@@ -374,7 +374,7 @@ void Robot::transportFinished(int robotId)
 {
     //Station vorbereiten für Freigabe
     QSqlQuery query(m_database->db());
-    query.prepare("UPDATE vpj.station SET clearing_time = NOW(), state_id = 1 WHERE station_id = ( SELECT sp.station_id FROM vpj.robot r INNER JOIN vpj.station_place sp ON r.station_place_id = sp.station_place_id WHERE r.robot_id = :robot_id)");
+    query.prepare("UPDATE vpj.station SET state_id = 1 WHERE station_id = ( SELECT sp.station_id FROM vpj.robot r INNER JOIN vpj.station_place sp ON r.station_place_id = sp.station_place_id WHERE r.robot_id = :robot_id)");
     query.bindValue(":robot_id", robotId);
     query.exec();
 
