@@ -107,8 +107,8 @@ void Robot::transport()
         if (robotState == State::Assigned && m_robotStates[robotId] == State::ReadyForReading)
         {
             qDebug() << "Transport: Robot" << robotId << "is ready for reading";
-            reading(robotId);
             m_database->updateRobotState(robotId, State::ReadyForReading, m_robotPlaces[robotId]);
+            reading(robotId);
         }
 
         //Roboterstatus DB = bereit zum Lesen & Roboterstatus Gewerk2 = belegt -> Roboter transportiert Werkstück
