@@ -21,7 +21,7 @@ void Station::updateStation()
 
 void Station::stationRelease() //Stations-/Platzfreigabe nach dem ein Roboter aus dem Weg gefahren ist
 {
-    int blocking_time = 10;
+    int blockingTime = 10;
     QDateTime currentDateTime = QDateTime::currentDateTime();
 
     //Transportstationsfreigabe wenn Roboter weg gefahren sind
@@ -35,7 +35,7 @@ void Station::stationRelease() //Stations-/Platzfreigabe nach dem ein Roboter au
         {
             QDateTime clearingTime = clearingTimeVariant.toDateTime();
             int timeDifference = clearingTime.secsTo(currentDateTime); // Zeitunterschied in Sekunden berechnen
-            if (timeDifference > blocking_time) //wenn Zeitdifferenz > als Sperrzeit
+            if (timeDifference > blockingTime) //wenn Zeitdifferenz > als Sperrzeit
             {
                 QSqlQuery query2(database->db());
                 query2.prepare("UPDATE vpj.station SET state_id = 0, clearing_time = NULL WHERE station_id = :station_id");
@@ -55,14 +55,14 @@ void Station::stationRelease() //Stations-/Platzfreigabe nach dem ein Roboter au
         {
             QDateTime clearingTime = clearingTimeVariant.toDateTime();
             int timeDifference = clearingTime.secsTo(currentDateTime); // Zeitunterschied in Sekunden berechnen
-            if (timeDifference > blocking_time) //wenn Zeitdifferenz > als Sperrzeit
+            if (timeDifference > blockingTime) //wenn Zeitdifferenz > als Sperrzeit
             {
                 //Ladestationsplätze + Historie aktualisieren
                 QSqlQuery query2(database->db());
                 query2.prepare("UPDATE vpj.station_place SET state_id = 0, clearing_time = NULL WHERE station_place_id = :station_place_id;");
                 query2.bindValue(":station_place_id", query.record().value(1).toInt());
                 query2.exec();
-                updateStationPlaceHistory(database->db(), query.record().value(1).toInt());
+                database->updateStationPlaceHistory(query.record().value(1).toInt());
             }
         }
     }
@@ -81,7 +81,7 @@ void Station::maintenanceChargingStation()
         query2.prepare("UPDATE vpj.station_place SET state_id = 3 WHERE station_place_id = :station_place_id;");
         query2.bindValue(":station_place_id", query.record().value(0).toInt());
         query2.exec();
-        updateStationPlaceHistory(database->db(), query.record().value(0).toInt());
+        database->updateStationPlaceHistory(query.record().value(0).toInt());
     }
 
     //Ladestationen aus Wartung herausholen
@@ -94,7 +94,7 @@ void Station::maintenanceChargingStation()
         query2.prepare("UPDATE vpj.station_place SET state_id = 0 WHERE station_place_id = :station_place_id;");
         query2.bindValue(":station_place_id", query.record().value(0).toInt());
         query.exec();
-        updateStationPlaceHistory(database->db(), query.record().value(0).toInt());
+        database->updateStationPlaceHistory(query.record().value(0).toInt());
     }
 }
 
@@ -114,7 +114,7 @@ void Station::workpieceProcessing() //Überprüfung der Werkstückbearbeitungsze
             query2.prepare("UPDATE vpj.workpiece SET workpiece_id = 0 WHERE workpiece_id = :workpiece_id;");
             query2.bindValue(":workpiece_id", query.record().value(0).toInt());
             query2.exec();
-            updateWorkpieceHistory(database->db(), query.record().value(0).toInt());
+            database->updateWorkpieceHistory(query.record().value(0).toInt());
         }
         else
         {
@@ -135,7 +135,7 @@ void Station::workpieceProcessing() //Überprüfung der Werkstückbearbeitungsze
                     query3.prepare("UPDATE vpj.workpiece SET workpiece_state_id = 1 WHERE workpiece_id = :workpiece_id;");
                     query3.bindValue(":workpiece_id", query.record().value(0).toInt());
                     query3.exec();
-                    updateWorkpieceHistory(database->db(), query.record().value(0).toInt());
+                    database->updateWorkpieceHistory(query.record().value(0).toInt());
                 }
             }
         }

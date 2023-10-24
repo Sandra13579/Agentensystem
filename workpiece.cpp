@@ -55,7 +55,7 @@ void Workpiece::orderAllocation()
             query3.bindValue(":production_process_id", productionProcessId);
             query3.bindValue(":workpiece_id", workpieceId);
             query3.exec();
-            updateWorkpieceHistory(database->db(), workpieceId);
+            database->updateWorkpieceHistory(workpieceId);
         }
     }
 }

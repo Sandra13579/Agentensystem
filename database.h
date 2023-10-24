@@ -2,6 +2,7 @@
 #define DATABASE_H
 
 #include <QSqlDatabase>
+#include <QSqlQuery>
 #include <QSqlError>
 #include <QObject>
 #include <QDebug>
@@ -14,6 +15,11 @@ public:
     void Connect();  //Methode zur Herstellung der Datenbankverbindung
     void Disconnect();  //Methode zur Trennung der Datenbankverbindung
     QSqlDatabase db() const { return m_db; } //Übergabe an query!
+
+    void updateRobotHistory(int robotId);
+    void updateStationPlaceHistory(int stationPlaceId);
+    void updateStationPlaceHistory(int stationId, int placeId);
+    void updateWorkpieceHistory(int workpieceId);
 
 private:
     QSqlDatabase m_db;    //repräsentiert die tatsächliche Datenbankverbindung

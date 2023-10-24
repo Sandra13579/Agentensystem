@@ -47,18 +47,16 @@ void Dispatcher::breakAfterJob()
 
 void Dispatcher::publishBreak(int stationId, int stationPlaceId, int robotId)
 {
-    QSqlQuery query(database->db());
-
     // publish Pausenauftrag (jobtype = 3, destination{station=10,place_id=1}) an robot_id
     Job job(JobType::Pause);
     job.start = {0, 0};
     job.destination = {10, 1};
     emit sendJob(job, robotId); // instruct to send a job (MQTT)
-
     if (stationId != 9) //Pause nach Transport
     {
         //qDebug() << "nach trans: publish stat_id " << station_id << ", place " << station_place_id << ", rob_id " << robot_id;
         //Station aktualisieren
+        QSqlQuery query(database->db());
         query.prepare("UPDATE vpj.station SET clearing_time = NOW() WHERE station_id = :station_id;");
         query.bindValue(":station_id", stationId);
         query.exec();
@@ -68,19 +66,18 @@ void Dispatcher::publishBreak(int stationId, int stationPlaceId, int robotId)
         qDebug() << "Pause nach Laden";
         //qDebug() << "nach load: publish stat_id " << station_id << ", place " << station_place_id << ", rob_id " << robot_id;
         //Stationsplatz + Historie aktualisieren
+        QSqlQuery query(database->db());
         query.prepare("UPDATE vpj.station_place SET clearing_time = NOW() WHERE station_place_id = :station_place_id;");
         query.bindValue(":station_place_id", stationPlaceId);
         query.exec();
-        query.prepare("INSERT INTO vpj.station_place_history (state_id, station_place_id) SELECT state_id, station_place_id FROM vpj.station_place WHERE station_place_id = :station_place_id; ");
-        query.bindValue(":station_place_id", stationPlaceId);
-        query.exec();
+        database->updateStationPlaceHistory(stationPlaceId);
     }
-
     //robotertabelle aktualisieren
+    QSqlQuery query(database->db());
     query.prepare("UPDATE vpj.robot SET jobtype_id = 3, station_place_id = 27 WHERE robot_id = :robot_id;");
     query.bindValue(":robot_id", robotId);
     query.exec();
-    updateRobotHistory(database->db(), robotId);
+    database->updateRobotHistory(robotId);
 }
 
 void Dispatcher::maintenace()
@@ -103,7 +100,7 @@ void Dispatcher::maintenace()
         query2.prepare("UPDATE vpj.robot SET jobtype_id = 2 WHERE robot_id = :robot_id");
         query2.bindValue(":robot_id", robotId);
         query2.exec();
-        updateRobotHistory(database->db(), robotId);
+        database->updateRobotHistory(robotId);
     }
 }
 
@@ -142,14 +139,12 @@ void Dispatcher::charging()
                 query3.prepare("UPDATE vpj.station_place SET state_id = 2 WHERE station_id = 9 AND place_id = :place_id;");
                 query3.bindValue(":place_id", placeId);
                 query3.exec();
-                query3.prepare("INSERT INTO vpj.station_place_history (state_id, station_place_id) SELECT state_id, station_place_id FROM vpj.station_place WHERE station_id = 9 AND place_id = :place_id;; ");
-                query3.bindValue(":place_id", placeId);
-                query3.exec();
+                database->updateStationPlaceHistory(9, placeId);
                 //Robotertabelle + Historie aktualisieren
                 query3.prepare("UPDATE vpj.robot SET jobtype_id = 1 WHERE robot_id = :robot_id;");
                 query3.bindValue(":robot_id", robotId);
                 query3.exec();
-                updateRobotHistory(database->db(), robotId);
+                database->updateRobotHistory(robotId);
             }
         }
     }
@@ -304,7 +299,7 @@ void Dispatcher::transport()
                         query3.prepare("UPDATE vpj.robot SET jobtype_id = 0 WHERE robot_id = :robot_id;");
                         query3.bindValue(":robot_id", robotId);
                         query3.exec();
-                        updateRobotHistory(database->db(), robotId);
+                        database->updateRobotHistory(robotId);
 
                         //Werkstücktabelle + History aktualisieren
                         query3.prepare("UPDATE vpj.workpiece SET current_step_duration = :current_step_duration, destination_station_place_id =  :destination_station_place_id, start_station_place_id =  :start_station_place_id, workpiece_state_id = 3, robot_id = :robot_id, step_id = :step_id WHERE workpiece_id = :workpiece_id;");
@@ -315,7 +310,7 @@ void Dispatcher::transport()
                         query3.bindValue(":step_id", step_id);
                         query3.bindValue(":workpiece_id", workpiece_id);
                         query3.exec();
-                        updateWorkpieceHistory(database->db(), workpiece_id);
+                        database->updateWorkpieceHistory(workpiece_id);
 
                         //Stationstabelle aktualisieren (Ziel und Start reservieren)
                         query3.prepare("UPDATE vpj.station SET state_id = 2 WHERE station_id = :start_station OR station_id = :destination_station;");
@@ -326,7 +321,7 @@ void Dispatcher::transport()
                         query3.prepare("UPDATE vpj.station_place SET state_id = 2 WHERE station_place_id = :station_place_id;");
                         query3.bindValue(":station_place_id", destination_station_place_id);
                         query3.exec();
-                        updateStationPlaceHistory(database->db(), destination_station_place_id);
+                        database->updateStationPlaceHistory(destination_station_place_id);
 
                         transportJobAllocated = 1; //nach Zuteilung, Abbruch bedingung
                     }
