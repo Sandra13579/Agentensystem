@@ -77,10 +77,7 @@ void Station::maintenanceChargingStation()
     while (query.next())
     {
         //Aktualisierung Stationsplatz + History (Status = inaktiv (in Wartung))
-        QSqlQuery query2(database->db());
-        query2.prepare("UPDATE vpj.station_place SET state_id = 3 WHERE station_place_id = :station_place_id;");
-        query2.bindValue(":station_place_id", query.record().value(0).toInt());
-        query2.exec();
+        database->updateStationPlaceState(query.record().value(0).toInt(), State::Inactive);
         database->updateStationPlaceHistory(query.record().value(0).toInt());
     }
 
@@ -90,10 +87,7 @@ void Station::maintenanceChargingStation()
     while (query.next())
     {
         //Aktualisierung Stationsplatz + History (Status = frei)
-        QSqlQuery query2(database->db());
-        query2.prepare("UPDATE vpj.station_place SET state_id = 0 WHERE station_place_id = :station_place_id;");
-        query2.bindValue(":station_place_id", query.record().value(0).toInt());
-        query.exec();
+        database->updateStationPlaceState(query.record().value(0).toInt(), State::Available);
         database->updateStationPlaceHistory(query.record().value(0).toInt());
     }
 }

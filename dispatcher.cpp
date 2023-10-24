@@ -134,13 +134,11 @@ void Dispatcher::charging()
                 job.destination = {9, placeId};
                 emit sendJob(job, robotId); // instruct to send a job (MQTT)
 
-                QSqlQuery query3(database->db());
                 //Stationsplatztabelle + Historie aktualisieren (Platz reservieren)
-                query3.prepare("UPDATE vpj.station_place SET state_id = 2 WHERE station_id = 9 AND place_id = :place_id;");
-                query3.bindValue(":place_id", placeId);
-                query3.exec();
+                database->updateStationPlaceState(9, placeId, State::Reserved);
                 database->updateStationPlaceHistory(9, placeId);
                 //Robotertabelle + Historie aktualisieren
+                QSqlQuery query3(database->db());
                 query3.prepare("UPDATE vpj.robot SET jobtype_id = 1 WHERE robot_id = :robot_id;");
                 query3.bindValue(":robot_id", robotId);
                 query3.exec();
@@ -318,9 +316,7 @@ void Dispatcher::transport()
                         query3.bindValue(":destination_station", destinationStationId);
                         query3.exec();
                         //Stationsplatztabelle + Historie aktualisieren (Zielplatz reservieren)
-                        query3.prepare("UPDATE vpj.station_place SET state_id = 2 WHERE station_place_id = :station_place_id;");
-                        query3.bindValue(":station_place_id", destination_station_place_id);
-                        query3.exec();
+                        database->updateStationPlaceState(destination_station_place_id, State::Reserved);
                         database->updateStationPlaceHistory(destination_station_place_id);
 
                         transportJobAllocated = 1; //nach Zuteilung, Abbruch bedingung

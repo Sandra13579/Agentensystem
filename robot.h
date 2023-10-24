@@ -42,7 +42,6 @@ private:
     QList<State> m_robotStates;
     QList<Place> m_robotPlaces;
     QList<State> m_chargingStationStates;
-    QList<int> m_rfid;
 
     void reading(int robotId);
     void checking(int robotId);
@@ -52,9 +51,6 @@ private:
     void transport();
     void charging();
     void maintenance();
-
-    void updateRobotDatabase(int robotId, State state);
-    void updateRobotDatabase(int robotId, State state, Place place);
 };
 
 #endif // ROBOT_H

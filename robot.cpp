@@ -42,32 +42,6 @@ void Robot::updateChargingStationStatus(int stationId, State state)
     m_chargingStationStates[stationId] = state;
 }
 
-//Update robots state in DB
-void Robot::updateRobotDatabase(int robotId, State state)
-{
-    QSqlQuery query(m_database->db());
-    query.prepare("UPDATE vpj.robot SET state_id = :state_id, timestamp = NOW() WHERE robot_id = :robot_id AND state_id <> :state_id");
-    query.bindValue(":robot_id", robotId);
-    query.bindValue(":state_id", static_cast<int>(state));
-    query.exec();
-
-    m_database->updateRobotHistory(robotId);
-}
-
-//Update robots state and station place in DB
-void Robot::updateRobotDatabase(int robotId, State state, Place place)
-{
-    QSqlQuery query(m_database->db());
-    query.prepare("UPDATE vpj.robot SET state_id = :state_id, station_place_id = (SELECT station_place_id FROM vpj.station_place WHERE station_id = :station_id AND place_id = :place_id), timestamp = NOW() WHERE robot_id = :robot_id");
-    query.bindValue(":robot_id", robotId);
-    query.bindValue(":state_id", static_cast<int>(state));
-    query.bindValue(":station_id", place.stationId);
-    query.bindValue(":place_id", place.placeId);
-    query.exec();
-
-    m_database->updateRobotHistory(robotId);
-}
-
 void Robot::maintenance()
 {
     QSqlQuery query(m_database->db());
@@ -83,14 +57,14 @@ void Robot::maintenance()
         //Status = reserviert (Gewerk 2) & status = frei (DB) -> Roboter fährt zum Wartungsplatz
         if (m_robotStates[robotId] == State::Reserved && robotState == State::Available)
         {
-            updateRobotDatabase(robotId, State::Reserved);
+            m_database->updateRobotState(robotId, State::Reserved);
             qDebug() << "Roboter" << robotId << "fährt zur Wartung";
         }
 
         //Status = inaktiv (Gewerk 2) & status = reserviert (DB) -> Roboter ist am Wartungsplatz angekommen
         if (m_robotStates[robotId] == State::Inactive && robotState == State::Reserved)
         {
-            updateRobotDatabase(robotId, State::Inactive, m_robotPlaces[robotId]);
+            m_database->updateRobotState(robotId, State::Inactive, m_robotPlaces[robotId]);
             qDebug() << "Roboter" << robotId << "befindet sich in Wartung";
         }
     }
@@ -110,7 +84,7 @@ void Robot::transport()
 
         if (m_robotStates[robotId] == State::Fault && robotState != State::Fault && robotState != State::Available)
         {
-            updateRobotDatabase(robotId, State::Fault);
+            m_database->updateRobotState(robotId, State::Fault);
         }
 
         //Roboterstatus DB = frei & Roboterstatus Gewerk 2 = reserviert -> Roboter hat Auftrag erhalten
@@ -118,7 +92,7 @@ void Robot::transport()
         {
             //Roboter reservieren
             qDebug() << "Transport: Robot" << robotId << "is reserved";
-            updateRobotDatabase(robotId, State::Reserved);
+            m_database->updateRobotState(robotId, State::Reserved);
         }
 
         //Roboterstatus DB = reserviert & Roboterstatus Gewerk2 = belegt -> Roboter transportiert Werkstück
@@ -126,7 +100,7 @@ void Robot::transport()
         {
             //Roboter hat Werkstück -> belegt
             qDebug() << "Transport: Robot" << robotId << "is assigned";
-            updateRobotDatabase(robotId, State::Assigned, m_robotPlaces[robotId]);
+            m_database->updateRobotState(robotId, State::Assigned, m_robotPlaces[robotId]);
         }
 
         //Roboterstatus DB = belegt & Roboterstatus Gewerk2 = bereit zum Lesen -> Roboter steht mit Werkstück am RFID Reader
@@ -134,7 +108,7 @@ void Robot::transport()
         {
             qDebug() << "Transport: Robot" << robotId << "is ready for reading";
             reading(robotId);
-            updateRobotDatabase(robotId, State::ReadyForReading, m_robotPlaces[robotId]);
+            m_database->updateRobotState(robotId, State::ReadyForReading, m_robotPlaces[robotId]);
         }
 
         //Roboterstatus DB = bereit zum Lesen & Roboterstatus Gewerk2 = belegt -> Roboter transportiert Werkstück
@@ -142,7 +116,7 @@ void Robot::transport()
         {
             qDebug() << "Transport: Robot" << robotId << "is assigned";
             checking(robotId);
-            updateRobotDatabase(robotId, State::Assigned, m_robotPlaces[robotId]);
+            m_database->updateRobotState(robotId, State::Assigned, m_robotPlaces[robotId]);
         }
 
         //Roboterstatus DB = „belegt“ & Roboterstatus (Gewerk2) = „frei“, dann rufe auf „Transportauftragabgeschlossenfunktion“
@@ -150,7 +124,7 @@ void Robot::transport()
         {
             qDebug() << "Transport: Robot" << robotId << "is available";
             transportFinished(robotId);
-            updateRobotDatabase(robotId, State::Available, m_robotPlaces[robotId]);
+            m_database->updateRobotState(robotId, State::Available, m_robotPlaces[robotId]);
         }
     }
 }
@@ -173,7 +147,7 @@ void Robot::charging()
         {
             //Roboter reservieren
             qDebug() << "Charging: Robot" << robotId << "is reserved";
-            updateRobotDatabase(robotId, State::Reserved);
+            m_database->updateRobotState(robotId, State::Reserved);
         }
 
         //wenn Roboterstatus „bereit zum Laden“ (Gewerk2) & Roboterstaus "reserviert" (DB)
@@ -181,7 +155,7 @@ void Robot::charging()
         {
             qDebug() << "Charging: Roboter" << robotId << " bereit zum Laden";
             robotState = State::ReadyForCharging;
-            updateRobotDatabase(robotId, State::ReadyForCharging, m_robotPlaces[robotId]);
+            m_database->updateRobotState(robotId, State::ReadyForCharging, m_robotPlaces[robotId]);
         }
 
         //wenn Roboterstatus „bereit zum Laden“ (Gewerk2) & (Roboterstatus (Gewerk4) =„initial") & Roboterstatus = "kein Fehler" (DB)
@@ -205,7 +179,7 @@ void Robot::charging()
                     if (clearingTime.secsTo(QDateTime::currentDateTime()) > maxDelay)
                     {
                         qDebug() << "Charging: Fehler beim Verbinden der Ladestation mit dem Roboter" << placeId;
-                        updateRobotDatabase(robotId, State::Fault);
+                        m_database->updateRobotState(robotId, State::Fault);
                     }
                 }
             }
@@ -214,7 +188,7 @@ void Robot::charging()
         //roboterstatus = bereit zum Laden (DB) und Ladestation = verbunden (Gewerk 4)
         if (robotState == State::ReadyForCharging && m_chargingStationStates[placeId] == State::Connected)
         {
-            updateRobotDatabase(robotId, State::Connected);
+            m_database->updateRobotState(robotId, State::Connected);
             qDebug() << "Charging: Roboter" << robotId << " ist mit Ladestation" << placeId << "verbunden";
             QSqlQuery query(m_database->db());
             //query.prepare("UPDATE vpj.station_place SET state_id = 1 WHERE station_place_id = (SELECT station_place_id FROM vpj.robot WHERE robot_id = :robot_id) AND state_id <> 1");
@@ -230,7 +204,7 @@ void Robot::charging()
         {
             if (robotState != State::Charging)
             {
-                updateRobotDatabase(robotId, State::Charging);
+                m_database->updateRobotState(robotId, State::Charging);
                 qDebug() << "Charging: Roboter" << robotId << " lädt";
             }
         }
@@ -240,7 +214,7 @@ void Robot::charging()
         {
             if (robotState != State::Available)
             {
-                updateRobotDatabase(robotId, State::Available);
+                m_database->updateRobotState(robotId, State::Available);
                 m_chargingStationStates[placeId] = State::Initial; //<- statt publish s.o.
                 qDebug() << "Charging: Ladevorgang für Roboter" << robotId << "an Ladestation" << placeId << "beendet";
             }
@@ -327,24 +301,20 @@ void Robot::checking(int robotId)
                 int stationPlaceId = query2.record().value(1).toInt();
                 int stationId = query2.record().value(2).toInt();
                 qDebug() << "Maintenance:" << maintenance << ",Station place ID:" << stationPlaceId << ",Station ID:" << stationId;
-                QSqlQuery query3(m_database->db());
+
                 if (maintenance == 1)
                 {
-                    //Wartungsfall
-                    //Stationsplatz inaktiv setzen
-                    query3.prepare("UPDATE vpj.station_place SET state_id = 3 WHERE station_place_id = :station_place_id");
-                    query3.bindValue(":station_place_id", stationPlaceId);
-                    query3.exec();                   
+                    //Wartungsfall: Stationsplatz inaktiv setzen
+                    m_database->updateStationPlaceState(stationPlaceId, State::Inactive);
                 }
                 else
                 {
                     //Stationsplatz freigeben
-                    query3.prepare("UPDATE vpj.station_place SET state_id = 0 WHERE station_place_id = :station_place_id");
-                    query3.bindValue(":station_place_id", stationPlaceId);
-                    query3.exec();
+                    m_database->updateStationPlaceState(stationPlaceId, State::Available);
                 }
                 m_database->updateStationPlaceHistory(stationPlaceId);
                 //Station vorbereiten für Freigabe
+                QSqlQuery query3(m_database->db());
                 query3.prepare("UPDATE vpj.station SET clearing_time = NOW(), state_id = 1 WHERE station_id = :station_id");
                 query3.bindValue(":station_id", stationId);
                 query3.exec();
@@ -371,6 +341,7 @@ void Robot::checking(int robotId)
 
 void Robot::transportFinished(int robotId)
 {
+    qDebug() << "Transport finished!";
     //Station vorbereiten für Freigabe
     QSqlQuery query(m_database->db());
     query.prepare("UPDATE vpj.station SET state_id = 1 WHERE station_id = ( SELECT sp.station_id FROM vpj.robot r INNER JOIN vpj.station_place sp ON r.station_place_id = sp.station_place_id WHERE r.robot_id = :robot_id)");
@@ -380,16 +351,16 @@ void Robot::transportFinished(int robotId)
     //Ziel: Stationsplatz auf belegt setzten
     query.prepare("SELECT station_place_id FROM vpj.workpiece WHERE robot_id = :robot_id");
     query.bindValue(":robot_id", robotId);
+    query.exec();
     query.next();
     int stationPlaceId = query.record().value(0).toInt();
-    query.prepare("UPDATE vpj.station_place SET state_id = 1 WHERE station_place_id = :station_place_id");
-    query.bindValue(":station_place_id", stationPlaceId);
-    query.exec();
+    m_database->updateStationPlaceState(stationPlaceId, State::Assigned);
     m_database->updateStationPlaceHistory(stationPlaceId);
 
     //Werkstück in Bearbeitung setzen
     query.prepare("SELECT workpiece_id FROM vpj.workpiece WHERE robot_id = :robot_id");
     query.bindValue(":robot_id", robotId);
+    query.exec();
     query.next();
     int workpieceId = query.record().value(0).toInt();
     query.prepare("UPDATE vpj.workpiece SET timestamp = NOW(), workpiece_state_id = 2, robot_id = NULL WHERE workpiece_id = :workpiece_id");
