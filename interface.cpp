@@ -176,7 +176,7 @@ void Interface::GetSubscriptionPayload(const QMqttMessage msg)
         {
             int batLevel = obj["battery_power"].toInt(-1);
             int robotId = topicLevel[1].toInt();
-            qDebug() << "Battery Level robot " << robotId << ":" << batLevel << "%";
+            //qDebug() << "Battery Level robot " << robotId << ":" << batLevel << "%";
             WriteBatteryLevelIntoDatabase(robotId, batLevel);
         }
         //Robot status
@@ -194,7 +194,7 @@ void Interface::GetSubscriptionPayload(const QMqttMessage msg)
     {
         State state = static_cast<State>(obj["status"].toInt(4)); //Default: 4 (Error)
         int placeId = topicLevel[1].toInt();
-        qDebug() << "Charging station" << placeId << "state is " << state;
+        //qDebug() << "Charging station" << placeId << "state is " << state;
         emit chargingStationStateChanged(placeId, state);
     }
     //Reading serial number from RFID tag

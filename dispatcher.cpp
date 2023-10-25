@@ -210,7 +210,7 @@ void Dispatcher::transport()
                 alternative_destination_station_id = 8;
                 step_duration = 0;
             }
-            qDebug() << "workpiece_id" << workpiece_id << ", start_station_place_id" << start_station_place_id << ", destination_station_id" << destinationStationId << ", alternative_destination_station_id" << alternative_destination_station_id << ", step_duration" << step_duration;
+            //qDebug() << "workpiece_id" << workpiece_id << ", start_station_place_id" << start_station_place_id << ", destination_station_id" << destinationStationId << ", alternative_destination_station_id" << alternative_destination_station_id << ", step_duration" << step_duration;
 
             //nächste Werkstücke die bearbeitet werden können
 
@@ -236,7 +236,7 @@ void Dispatcher::transport()
                 }
             }
 
-            qDebug() << "destination_station_place_id" << destination_station_place_id << ", destination_place_id" << destinationPlaceId << ", destination_station_id" << destinationStationId;
+            //qDebug() << "destination_station_place_id" << destination_station_place_id << ", destination_place_id" << destinationPlaceId << ", destination_station_id" << destinationStationId;
             if (destinationPlaceId != -1)
             {
                 //steht kein Roboter an der aktuellen Station?
@@ -248,7 +248,7 @@ void Dispatcher::transport()
                 {
                     startStationId = query6.record().value(0).toInt();
                     startPlaceId = query6.record().value(1).toInt();
-                    qDebug() << "start_station_id" << startStationId << "start_place_id" << startPlaceId;
+                    //qDebug() << "start_station_id" << startStationId << "start_place_id" << startPlaceId;
 
                     //steht kein Roboter an der nächsten Station & die nächste Station muss nicht in Wartung?
                     QSqlQuery query7(database->db());
