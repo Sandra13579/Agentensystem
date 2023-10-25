@@ -323,7 +323,7 @@ void Interface::SendAllRfidReadersOff()
         {
             {"Read", 0}
         };
-    PublishMqttMessage(topicRfidReaderOn, QJsonDocument(payload).toJson(QJsonDocument::Compact));
+    PublishMqttMessage(topicRfidReaderOn, QJsonDocument(payload).toJson(QJsonDocument::Compact), 0, true);
 }
 
 void Interface::SendRfidReaderOn(int stationId)
@@ -332,7 +332,7 @@ void Interface::SendRfidReaderOn(int stationId)
         {
             {"Read", stationId}
         };
-    PublishMqttMessage(topicRfidReaderOn, QJsonDocument(payload).toJson(QJsonDocument::Compact));
+    PublishMqttMessage(topicRfidReaderOn, QJsonDocument(payload).toJson(QJsonDocument::Compact), 0, true);
 }
 
 // SendTest: Only for testing!
@@ -350,9 +350,14 @@ void Interface::SendTest()
 // Publish an MQTT message with with the given payload and topic
 void Interface::PublishMqttMessage(QString topic, QString payload)
 {
+    PublishMqttMessage(topic, payload, 0, false);
+}
+
+void Interface::PublishMqttMessage(QString topic, QString payload, quint8 qos, bool retain)
+{
     QByteArray message;
     message.append(payload.toStdString());
-    m_mqttClient->publish(QMqttTopicName(topic), message);
+    m_mqttClient->publish(QMqttTopicName(topic), message, qos, retain);
 }
 
 QMqttSubscription *Interface::GetSubscription(QString topic)

@@ -53,7 +53,8 @@ private:
     QMqttSubscription *m_subscriptionRfidStation;
 
     //MQTT methods
-    void PublishMqttMessage(QString topicStr, QString payloadStr);
+    void PublishMqttMessage(QString topic, QString payload);
+    void PublishMqttMessage(QString topic, QString payload, quint8 qos, bool retain);
     QMqttSubscription * GetSubscription(QString topic);
 
     //UDP
