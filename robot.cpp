@@ -332,7 +332,7 @@ void Robot::checking(int robotId)
             QSqlQuery query2(m_database->db());
             //Werkstücktabelle aktualisieren, eingecheckt
             query2.prepare("UPDATE vpj.workpiece SET checked_in = 1 WHERE workpiece_id = :workpiece_id");
-            query2.bindValue("workpiece_id", workpieceId);
+            query2.bindValue(":workpiece_id", workpieceId);
             query2.exec();
             m_database->updateWorkpieceHistory(workpieceId);
         }

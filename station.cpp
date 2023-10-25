@@ -105,7 +105,7 @@ void Station::workpieceProcessing() //Überprüfung der Werkstückbearbeitungsze
         {
             //Aktualisierung Werkstücktabelle + Historie (status = fertig produziert)
             QSqlQuery query2(database->db());
-            query2.prepare("UPDATE vpj.workpiece SET workpiece_id = 0 WHERE workpiece_id = :workpiece_id;");
+            query2.prepare("UPDATE vpj.workpiece SET workpiece_state_id = 0 WHERE workpiece_id = :workpiece_id;");
             query2.bindValue(":workpiece_id", query.record().value(0).toInt());
             query2.exec();
             database->updateWorkpieceHistory(query.record().value(0).toInt());
