@@ -47,10 +47,10 @@ public:
 private:
     //MQTT
     QMqttClient *m_mqttClient;
-    QMqttSubscription *m_subscriptionRobotStatus;
-    QMqttSubscription *m_subscriptionRobotEnergy;
-    QMqttSubscription *m_subscriptionChargingStation;
-    QMqttSubscription *m_subscriptionRfidStation;
+    QMqttSubscription *m_subscriptionRobotStatus = nullptr;
+    QMqttSubscription *m_subscriptionRobotEnergy = nullptr;
+    QMqttSubscription *m_subscriptionChargingStation = nullptr;
+    QMqttSubscription *m_subscriptionRfidStation = nullptr;
 
     //MQTT methods
     void PublishMqttMessage(QString topic, QString payload);

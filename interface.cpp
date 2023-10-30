@@ -117,40 +117,6 @@ void Interface::WriteBatteryLevelIntoDatabase(int robotId, int batteryLevel)
     query.exec();
 }
 
-//void Interface::WriteRobotStatusIntoDatabase(int robotId, State state, int stationId, int placeId)
-//{
-//    QSqlQuery query(m_database->db());
-//    query.prepare("SELECT station_place_id FROM vpj.station_place WHERE station_id = :station_id AND place_id = :place_id");
-//    query.bindValue(":station_id", stationId);
-//    query.bindValue(":place_id", placeId);
-//    query.exec();
-//    if (query.next())
-//    {
-//        int stationPlaceId = query.record().value(0).toInt();
-//        query.prepare("UPDATE vpj.robot SET state_id = :state_id, station_place_id = :station_place_id WHERE robot_id = :id");
-//        query.bindValue(":id", robotId);
-//        query.bindValue(":state_id", static_cast<int>(state));
-//        query.bindValue(":station_place_id", stationPlaceId);
-//        query.exec();
-//        return;
-//    }
-
-//    //Falls Roboter nicht an einer Station steht wird der Status trotzdem aktualisiert (evtl. für Fehler etc.)
-//    query.prepare("UPDATE vpj.robot SET state_id = :state_id WHERE robot_id = :id");
-//    query.bindValue(":id", robotId);
-//    query.bindValue(":state_id", static_cast<int>(state));
-//    query.exec();
-//}
-
-//void Interface::WriteChargingStationStateIntoDatabase(int placeId, State state)
-//{
-//    QSqlQuery query(m_database->db());
-//    query.prepare("UPDATE vpj.station_place SET state_id = :state_id WHERE station_id = 9 AND place_id = :place_id");
-//    query.bindValue(":state_id", static_cast<int>(state));
-//    query.bindValue(":place_id", placeId);
-//    query.exec();
-//}
-
 void Interface::GetSubscriptionPayload(const QMqttMessage msg)
 {
     /* Ordungsgemäßes Schließen der Anwendung testweise!!!!!!! */
@@ -218,13 +184,9 @@ void Interface::SubscribeToTopics()
 void Interface::UnsubscribeAllTopics()
 {
     m_subscriptionRobotStatus->unsubscribe();
-    delete m_subscriptionRobotStatus;
     m_subscriptionChargingStation->unsubscribe();
-    delete m_subscriptionChargingStation;
     m_subscriptionRobotEnergy->unsubscribe();
-    delete m_subscriptionRobotEnergy;
     m_subscriptionRfidStation->unsubscribe();
-    delete m_subscriptionRfidStation;
 }
 
 void Interface::UpdateSubscriberState(QMqttSubscription::SubscriptionState state)
