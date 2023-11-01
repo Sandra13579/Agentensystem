@@ -14,8 +14,11 @@ Workpiece::~Workpiece()
 
 void Workpiece::updateOrder()
 {
-    this->orderAllocation();
-    this->orderAdministration();
+    qDebug() << "Workpiece agent execution started";
+    while (true) {
+        orderAllocation();
+        orderAdministration();
+    }
 }
 
 //Werkstück - Auftragszuordnung

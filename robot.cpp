@@ -1,4 +1,5 @@
 #include "robot.h"
+#include "qeventloop.h"
 
 Robot::Robot(QObject *parent)
     : QObject{parent}
@@ -19,9 +20,12 @@ Robot::Robot(QObject *parent)
 
 void Robot::updateRobot()
 {
-    this->transport();
-    this->charging();
-    this->maintenance();
+    qDebug() << "Robot agent execution started";
+    while (true) {
+        transport();
+        charging();
+        maintenance();
+    }
 }
 
 Robot::~Robot()

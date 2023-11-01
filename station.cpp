@@ -14,9 +14,12 @@ Station::~Station()
 
 void Station::updateStation()
 {
-    stationRelease();
-    maintenanceChargingStation();
-    workpieceProcessing();
+    qDebug() << "Station agent execution started";
+    while (true) {
+        stationRelease();
+        maintenanceChargingStation();
+        workpieceProcessing();
+    }
 }
 
 void Station::stationRelease() //Stations-/Platzfreigabe nach dem ein Roboter aus dem Weg gefahren ist

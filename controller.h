@@ -4,6 +4,12 @@
 #include <QObject>
 #include <QThread>
 
+#include "interface.h"
+#include "dispatcher.h"
+#include "station.h"
+#include "workpiece.h"
+#include "robot.h"
+
 class Controller : public QObject
 {
     Q_OBJECT
@@ -12,25 +18,18 @@ public:
     ~Controller();
     //void startWork();
 
-    enum ThreadAgent
-    {
-        All,
-        DispatcherAgent,
-        RobotAgent,
-        StationAgent,
-        WorkpieceAgent
-    };
-
 private:
-    QThread *dispatcherAgentThread;
-    QThread *robotAgentThread;
-    QThread *stationAgentThread;
-    QThread *workpieceAgentThread;
+    Interface *m_interface;
+
+    QThread *m_dispatcherAgentThread;
+    QThread *m_robotAgentThread;
+    QThread *m_stationAgentThread;
+    QThread *m_workpieceAgentThread;
 
 public slots:
-    void setInactive(Controller::ThreadAgent agent);
+    void setInactive();
 signals:
-    void operate(Controller::ThreadAgent agent);
+    void operate();
 };
 
 #endif // CONTROLLER_H

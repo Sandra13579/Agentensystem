@@ -14,10 +14,13 @@ Dispatcher::~Dispatcher()
 
 void Dispatcher::updateJobtype()
 {
-    this->breakAfterJob();
-    this->maintenace();
-    this->charging();
-    this->transport();
+    qDebug() << "Dispatcher agent execution started";
+    while (true) {
+        breakAfterJob();
+        maintenace();
+        charging();
+        transport();
+    }
 }
 
 void Dispatcher::breakAfterJob()
