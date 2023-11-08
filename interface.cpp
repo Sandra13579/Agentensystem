@@ -89,22 +89,22 @@ void Interface::WriteRobotPositionsInDatabase()
     {
         if (m_robotPositions.positions[i].x == 0 && m_robotPositions.positions[i].y == 0)
             continue;
-        double e = m_robotPositions.positions[i].e;
-
-        //If new pos - old pos < e
-        if (m_robotPositions.positions[i].x - m_oldRobotPositions[i].x < e &&
-            m_robotPositions.positions[i].y - m_oldRobotPositions[i].y < e)
-        {
-            break;
-        }
+//        double e = m_robotPositions.positions[i].e / 2;
+//        //If new pos - old pos < e
+//        if (m_robotPositions.positions[i].x - m_oldRobotPositions[i].x < e &&
+//            m_robotPositions.positions[i].y - m_oldRobotPositions[i].y < e)
+//        {
+//            continue;
+//        }
         QSqlQuery query(m_database->db());
-        query.prepare("UPDATE vpj.robot SET robot_position_x = :x, robot_position_y = :y WHERE robot_id = :id");
-        query.bindValue(":id", i + 1);
+        query.prepare("UPDATE vpj.robot SET robot_position_x = :x, robot_position_y = :y WHERE robot_id = :robot_id");
+        query.bindValue(":robot_id", i + 1);
         query.bindValue(":x", QString::number(m_robotPositions.positions[i].x, 'f', 2));
         query.bindValue(":y", QString::number(m_robotPositions.positions[i].y, 'f', 2));
         query.exec();
+        m_oldRobotPositions[i] = m_robotPositions.positions[i];
     }
-    m_oldRobotPositions = m_robotPositions.positions;
+    //m_oldRobotPositions = m_robotPositions.positions;
     m_positionDataAvailable = false;
 }
 
@@ -151,7 +151,7 @@ void Interface::GetSubscriptionPayload(const QMqttMessage msg)
             State state = static_cast<State>(obj["status"].toInt(4)); //Default: 4 (Error)
             Place place = { obj["station_id"].toInt(), obj["place_id"].toInt() };
             int robotId = topicLevel[1].toInt();
-            qDebug() << "Robot " << robotId << "state is " << state;
+            //qDebug() << "Robot " << robotId << "state is " << state;
             emit robotStateChanged(robotId, state, place);
         }
     }

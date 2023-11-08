@@ -178,7 +178,7 @@ void Robot::charging()
                     //qDebug() << "Timestamp Programm:" << QDateTime::currentDateTime();
                     if (clearingTime.secsTo(QDateTime::currentDateTime()) > maxDelay)
                     {
-                        qDebug() << "Charging: Fehler beim Verbinden der Ladestation mit dem Roboter" << placeId;
+                        qDebug() << "Charging: Fehler beim Verbinden der Ladestation" << placeId << "mit dem Roboter" << robotId;
                         m_database->updateRobotState(robotId, State::Fault);
                     }
                 }

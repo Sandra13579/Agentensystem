@@ -28,7 +28,7 @@ void Workpiece::orderAllocation()
     if(query.next())
     {
         int workpieceId = query.record().value(0).toInt();
-        qDebug() << "Werkstück" << workpieceId << "ist keinem Auftrag zugeordnet";
+        //qDebug() << "Werkstück" << workpieceId << "ist keinem Auftrag zugeordnet";
         //Suche nach ältestem Auftrag, für den noch werkstücke bearbeitet werden müssen
         QSqlQuery query2(database->db());
         query2.prepare("SELECT production_order_id FROM vpj.production_order WHERE assigned_workpieces < number_of_pieces ORDER BY TIMESTAMP ASC LIMIT 1");
