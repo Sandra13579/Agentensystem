@@ -11,8 +11,14 @@ Interface::Interface(QObject *parent)
     m_database = new Database("Interface");
     m_database->Connect();
 
-    for (int i = 0; i < 8; ++i) {
+    QSqlQuery query(m_database->db());
+    query.prepare("SELECT robot_position_x, robot_position_y FROM vpj.robot");
+    query.exec();
+    while (query.next())
+    {
         Position pos;
+        pos.x = query.record().value(0).toDouble();
+        pos.y = query.record().value(1).toDouble();
         m_oldRobotPositions.append(pos);
     }
 
@@ -89,13 +95,13 @@ void Interface::WriteRobotPositionsInDatabase()
     {
         if (m_robotPositions.positions[i].x == 0 && m_robotPositions.positions[i].y == 0)
             continue;
-//        double e = m_robotPositions.positions[i].e / 2;
-//        //If new pos - old pos < e
-//        if (m_robotPositions.positions[i].x - m_oldRobotPositions[i].x < e &&
-//            m_robotPositions.positions[i].y - m_oldRobotPositions[i].y < e)
-//        {
-//            continue;
-//        }
+        double e = qAbs(m_robotPositions.positions[i].e / 2);
+        //If new pos - old pos < e
+        if (qAbs(m_robotPositions.positions[i].x - m_oldRobotPositions[i].x) < e &&
+            qAbs(m_robotPositions.positions[i].y - m_oldRobotPositions[i].y) < e)
+        {
+            continue;
+        }
         QSqlQuery query(m_database->db());
         query.prepare("UPDATE vpj.robot SET robot_position_x = :x, robot_position_y = :y WHERE robot_id = :robot_id");
         query.bindValue(":robot_id", i + 1);
