@@ -33,7 +33,7 @@ signals:
     //Call to send check
     void check(int robotNo);
     //Call to start/stop charging
-    void charge(bool chargingState, int placeId);
+    void charge(bool chargingState, int placeId, int robotId);
 
 private:
     Database *m_database;

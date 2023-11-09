@@ -268,13 +268,13 @@ void Interface::SendCheck(int robotNo)
     PublishMqttMessage(QString(topicChecked).replace("<No>", QString::number(robotNo)), payload);
 }
 
-void Interface::SendCharging (bool chargingState, int stationId)
+void Interface::SendCharging (bool chargingState, int stationId, int robotId)
 {
     QJsonObject object
         {
-            {"charge", chargingState}
+            {"charge", chargingState},
+            {"robot", robotId}
         };
-
     QString payload = QJsonDocument(object).toJson(QJsonDocument::Compact);
     PublishMqttMessage(QString(topicCharging).replace("<No>", QString::number(stationId)), payload);
 }
@@ -305,8 +305,8 @@ void Interface::SendTest()
     job.start = {1,2};
     job.destination = {1,3};
     SendJob(job, 2);
-    SendCharging(true, 3);
-    SendCharging(false, 2);
+    SendCharging(true, 3, 1);
+    SendCharging(false, 2, 2);
 }
 
 // Publish an MQTT message with with the given payload and topic

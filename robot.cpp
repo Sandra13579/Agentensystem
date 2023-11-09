@@ -195,7 +195,7 @@ void Robot::charging()
             query.prepare("UPDATE vpj.station_place SET state_id = 1 WHERE station_id = 9 AND place_id = :place_id AND state_id <> 1");
             query.bindValue(":place_id", placeId);
             query.exec();
-            emit charge(true, placeId);
+            emit charge(true, placeId, robotId);
             qDebug() << "Charging: Ladevorgang wird gestartet";
         }
 

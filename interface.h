@@ -86,7 +86,7 @@ public slots:
     //MQTT payload methods
     void SendJob(Job job, int robotNo);
     void SendCheck(int robotNo);
-    void SendCharging(bool chargingState, int stationId);
+    void SendCharging(bool chargingState, int stationId, int robotId);
     void SendAllRfidReadersOff();
     void SendRfidReaderOn(int stationId);
 
