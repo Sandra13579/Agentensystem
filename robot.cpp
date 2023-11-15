@@ -124,7 +124,7 @@ void Robot::transport()
         {
             qDebug() << "Transport: Robot" << robotId << "is available";
             transportFinished(robotId);
-            m_database->updateRobotState(robotId, State::Available, m_robotPlaces[robotId]);
+            m_database->updateRobotState(robotId, State::Available);
         }
     }
 }
