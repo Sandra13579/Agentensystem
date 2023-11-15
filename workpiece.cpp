@@ -14,8 +14,10 @@ Workpiece::~Workpiece()
 
 void Workpiece::updateOrder()
 {
+    measurementTimer.start();
     this->orderAllocation();
     this->orderAdministration();
+    qDebug() << "Execution time Workpiece:" << measurementTimer.elapsed();
 }
 
 //Werkstück - Auftragszuordnung

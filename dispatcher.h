@@ -5,6 +5,7 @@
 #include <QSqlQuery>
 #include <QSqlIndex>
 #include <QtMath>
+#include <QElapsedTimer>
 
 #include "global.h"
 #include "database.h"
@@ -20,6 +21,7 @@ public slots:
     void updateJobtype();
 private:
     Database *database;
+    QElapsedTimer measurementTimer;
     void maintenace();
     void charging();
     void breakAfterJob();

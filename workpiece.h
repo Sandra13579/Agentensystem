@@ -4,6 +4,7 @@
 #include <QObject>
 #include <QSqlQuery>
 #include <QSqlIndex>
+#include <QElapsedTimer>
 
 #include "global.h"
 #include "database.h"
@@ -18,6 +19,7 @@ public slots:
     void updateOrder();
 private:
     Database *database;
+    QElapsedTimer measurementTimer;
     void orderAllocation();
     void orderAdministration();
 };

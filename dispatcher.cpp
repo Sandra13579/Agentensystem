@@ -14,10 +14,12 @@ Dispatcher::~Dispatcher()
 
 void Dispatcher::updateJobtype()
 {
+    measurementTimer.start();
     this->breakAfterJob();
     this->maintenace();
     this->charging();
     this->transport();
+    qDebug() << "Execution time Dispatcher:" << measurementTimer.elapsed();
 }
 
 void Dispatcher::breakAfterJob()

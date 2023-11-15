@@ -47,7 +47,7 @@ int main(int argc, char *argv[])
     QObject::connect(robot, &Robot::charge, interface, &Interface::sendCharging);           //Ladevorgang starten
 
     //Start agent execution
-    QObject::connect(interface, &Interface::connected, cycleTimer, [=]() { cycleTimer->start(100); });
+    QObject::connect(interface, &Interface::connected, cycleTimer, [=]() { cycleTimer->start(50); });
     QObject::connect(interface, &Interface::disconnected, cycleTimer, [=]() { cycleTimer->stop(); });
     QObject::connect(interface, &Interface::close, cycleTimer, [=]() { cycleTimer->stop(); QCoreApplication::quit(); });
 

@@ -5,6 +5,7 @@
 #include <QSqlQuery>
 #include <QSqlIndex>
 #include <QDateTime>
+#include <QElapsedTimer>
 
 #include "global.h"
 #include "database.h"
@@ -19,6 +20,7 @@ public slots:
     void updateStation();
 private:
     Database *database;
+    QElapsedTimer measurementTimer;
     void stationRelease();
     void maintenanceChargingStation();
     void workpieceProcessing();

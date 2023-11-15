@@ -6,6 +6,7 @@
 #include <QSqlIndex>
 #include <QDateTime>
 #include <QtMath>
+#include <QElapsedTimer>
 
 #include "global.h"
 #include "database.h"
@@ -36,7 +37,7 @@ signals:
 
 private:
     Database *m_database;
-
+    QElapsedTimer measurementTimer;
     //Save incoming state changes from MQTT
     QList<State> m_robotStates;
     QList<Place> m_robotPlaces;

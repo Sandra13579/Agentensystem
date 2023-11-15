@@ -19,9 +19,11 @@ Robot::Robot(QObject *parent)
 
 void Robot::updateRobot()
 {
+    measurementTimer.start();
     this->transport();
     this->charging();
     this->maintenance();
+    qDebug() << "Execution time Robot:" << measurementTimer.elapsed();
 }
 
 Robot::~Robot()

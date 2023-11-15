@@ -14,9 +14,11 @@ Station::~Station()
 
 void Station::updateStation()
 {
+    measurementTimer.start();
     stationRelease();
     maintenanceChargingStation();
     workpieceProcessing();
+    qDebug() << "Execution time Station:" << measurementTimer.elapsed();
 }
 
 void Station::stationRelease() //Stations-/Platzfreigabe nach dem ein Roboter aus dem Weg gefahren ist
