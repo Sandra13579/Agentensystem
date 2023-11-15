@@ -83,6 +83,7 @@ signals:
     void serialNumberRead(int stationId, int serialNumber);
     void connected(void);
     void disconnected(void);
+    void close(void);
 
 public slots:
     //MQTT payload methods
@@ -93,15 +94,11 @@ public slots:
     void SendRfidReaderOn(int stationId);
     void SendRfidReaderOff(int stationId);
 
-    void SendTest();    //Test method for mqtt publish!
-
 private slots:
     void ReadUdpData();    //Slot that reads the UDP payload
     void GetSubscriptionPayload(const QMqttMessage msg);
     void WriteRobotPositionsInDatabase();
     void WriteBatteryLevelIntoDatabase(int robotId, int batteryLevel);
-    //void WriteRobotStatusIntoDatabase(int robotId, State state, int stationId, int placeId);
-    //void WriteChargingStationStateIntoDatabase(int stationId, State state);
 
     //Handle changes in subscriber state (un-/subscibed/pending) and connection state (dis-/connected/pending)
     void UpdateSubscriberState(QMqttSubscription::SubscriptionState state);

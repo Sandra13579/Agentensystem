@@ -136,7 +136,7 @@ void Interface::GetSubscriptionPayload(const QMqttMessage msg)
     if (msg.payload() == "exit")
     {
         qDebug() << "Exit requested!";
-        emit disconnected();
+        emit close();
         return;
     }
     /* ------------------------------------------------------- */
@@ -231,6 +231,7 @@ void Interface::UpdateConnectionState(QMqttClient::ClientState state)
         break;
     case QMqttClient::Disconnected:
         qDebug() << "MQTT Client with ID" << m_mqttClient->clientId() << "disconnected!";
+        QTimer::singleShot(1, this, [this]() { emit disconnected(); });   //Zum Einschalten der Agenten
         UnsubscribeAllTopics();
         QTimer::singleShot(2000, this, &Interface::ReconnectToBroker);
         break;
@@ -324,18 +325,6 @@ void Interface::SendRfidReaderOff(int stationId)
         SendAllRfidReadersOff();
     }
     m_rfidStationStates[stationId] = false;
-}
-
-// SendTest: Only for testing!
-void Interface::SendTest()
-{
-    SendCheck(4);
-    Job job(JobType::Transport);
-    job.start = {1,2};
-    job.destination = {1,3};
-    SendJob(job, 2);
-    SendCharging(true, 3, 1);
-    SendCharging(false, 2, 2);
 }
 
 // Publish an MQTT message with with the given payload and topic

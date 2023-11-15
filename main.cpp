@@ -38,7 +38,6 @@ int main(int argc, char *argv[])
     QObject::connect(cycleTimer, &QTimer::timeout, robot, &Robot::updateRobot);
     QObject::connect(interface, &Interface::robotStateChanged, robot, &Robot::updateRobotStatus);   //Roboterstatus ändert sich
     QObject::connect(interface, &Interface::chargingStationStateChanged, robot, &Robot::updateChargingStationStatus);   //Ladestation
-
     QObject::connect(interface, &Interface::serialNumberRead, robot, &Robot::continueReading);
 
     //MQTT actions
@@ -48,8 +47,9 @@ int main(int argc, char *argv[])
     QObject::connect(robot, &Robot::charge, interface, &Interface::SendCharging);           //Ladevorgang starten
 
     //Start agent execution
-    QObject::connect(interface, &Interface::connected, cycleTimer, [=]() { cycleTimer->start(1000); });
-    QObject::connect(interface, &Interface::disconnected, cycleTimer, [=]() { cycleTimer->stop(); QCoreApplication::quit(); });
+    QObject::connect(interface, &Interface::connected, cycleTimer, [=]() { cycleTimer->start(100); });
+    QObject::connect(interface, &Interface::disconnected, cycleTimer, [=]() { cycleTimer->stop(); });
+    QObject::connect(interface, &Interface::close, cycleTimer, [=]() { cycleTimer->stop(); QCoreApplication::quit(); });
 
     return a.exec();
 }
