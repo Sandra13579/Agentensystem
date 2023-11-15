@@ -241,7 +241,7 @@ void Robot::continueReading(int stationId, int serialNumber)
     if (serialNumber != 0)
     {
         qDebug() << "Reading: Continue reading sequence at station" << stationId << "with serial number" << serialNumber;
-        emit rfidOff();
+        emit rfidOff(stationId);
         QSqlQuery query(m_database->db());
         query.prepare("SELECT rfid FROM vpj.workpiece INNER JOIN vpj.station_place ON workpiece.station_place_id = station_place.station_place_id WHERE station_place.station_id = :station_id AND workpiece.workpiece_state_id = 3");
         query.bindValue(":station_id", stationId);

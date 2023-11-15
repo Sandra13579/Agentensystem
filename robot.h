@@ -28,8 +28,8 @@ public slots:
 signals:
     //Call to turn on the RFID reader at the station
     void rfidOn(int stationId);
-    //Call to turn off all RFID readers
-    void rfidOff();
+    //Call to turn off the RFID reader at the station
+    void rfidOff(int stationId);
     //Call to send check
     void check(int robotNo);
     //Call to start/stop charging

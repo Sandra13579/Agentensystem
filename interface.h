@@ -12,6 +12,7 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QtMath>
+#include <QMap>
 
 #include "global.h"
 #include "database.h"
@@ -56,6 +57,7 @@ private:
     void PublishMqttMessage(QString topic, QString payload);
     void PublishMqttMessage(QString topic, QString payload, quint8 qos, bool retain);
     QMqttSubscription * GetSubscription(QString topic);
+    QMap<int, bool> m_rfidStationStates;
 
     //UDP
     QUdpSocket *m_udpSocket;
@@ -89,6 +91,7 @@ public slots:
     void SendCharging(bool chargingState, int stationId, int robotId);
     void SendAllRfidReadersOff();
     void SendRfidReaderOn(int stationId);
+    void SendRfidReaderOff(int stationId);
 
     void SendTest();    //Test method for mqtt publish!
 

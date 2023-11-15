@@ -22,6 +22,11 @@ Interface::Interface(QObject *parent)
         m_oldRobotPositions.append(pos);
     }
 
+    for (int i = 1; i < 9; ++i)
+    {
+        m_rfidStationStates.insert(i, false);
+    }
+
     m_robotPositionWriter->start(15);
 
     //QTimer::singleShot(3000, this, &Interface::SendTest);
@@ -301,6 +306,24 @@ void Interface::SendRfidReaderOn(int stationId)
             {"Read", stationId}
         };
     PublishMqttMessage(topicRfidReaderOn, QJsonDocument(payload).toJson(QJsonDocument::Compact), 0, true);
+    m_rfidStationStates[stationId] = true;
+}
+
+void Interface::SendRfidReaderOff(int stationId)
+{
+    int activeStationCount = 0;
+    foreach (bool state, m_rfidStationStates)
+    {
+        if (state)
+        {
+            activeStationCount++;
+        }
+    }
+    if (activeStationCount == 1)
+    {
+        SendAllRfidReadersOff();
+    }
+    m_rfidStationStates[stationId] = false;
 }
 
 // SendTest: Only for testing!

@@ -43,7 +43,7 @@ int main(int argc, char *argv[])
 
     //MQTT actions
     QObject::connect(robot, &Robot::rfidOn, interface, &Interface::SendRfidReaderOn);       //RFID Reader einschalten
-    QObject::connect(robot, &Robot::rfidOff, interface, &Interface::SendAllRfidReadersOff); //RFID Reader ausschalten
+    QObject::connect(robot, &Robot::rfidOff, interface, &Interface::SendRfidReaderOff);     //RFID Reader ausschalten
     QObject::connect(robot, &Robot::check, interface, &Interface::SendCheck);               //Einschecken bzw. Auschecken
     QObject::connect(robot, &Robot::charge, interface, &Interface::SendCharging);           //Ladevorgang starten
 
