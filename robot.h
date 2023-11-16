@@ -19,7 +19,6 @@ public:
 
 public slots:
     void updateRobot();
-
     void updateRobotStatus(int robotId, State state, Place place);
     void updateChargingStationStatus(int stationId, State state);
     void continueReading(int stationId, int serialNumber); //Slot -> nach der RFID-Leseanfrage vom Agenten wird diese Funktion aufgerufen,

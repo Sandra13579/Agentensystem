@@ -23,7 +23,7 @@ int main(int argc, char *argv[])
     //Dispatcher agent initialization
     Dispatcher *dispatcher = new Dispatcher(&a);
     QObject::connect(cycleTimer, &QTimer::timeout, dispatcher, &Dispatcher::updateJobtype);
-    QObject::connect(dispatcher, &Dispatcher::sendJob, interface, &Interface::SendJob);  //Auftrag senden -> GW2
+    QObject::connect(dispatcher, &Dispatcher::sendJob, interface, &Interface::sendJob);  //Auftrag senden -> GW2
 
     //Station agent initialization
     Station *station = new Station(&a);
@@ -41,10 +41,10 @@ int main(int argc, char *argv[])
     QObject::connect(interface, &Interface::serialNumberRead, robot, &Robot::continueReading);
 
     //MQTT actions
-    QObject::connect(robot, &Robot::rfidOn, interface, &Interface::SendRfidReaderOn);       //RFID Reader einschalten
+    QObject::connect(robot, &Robot::rfidOn, interface, &Interface::sendRfidReaderOn);       //RFID Reader einschalten
     QObject::connect(robot, &Robot::rfidOff, interface, &Interface::SendRfidReaderOff);     //RFID Reader ausschalten
-    QObject::connect(robot, &Robot::check, interface, &Interface::SendCheck);               //Einschecken bzw. Auschecken
-    QObject::connect(robot, &Robot::charge, interface, &Interface::SendCharging);           //Ladevorgang starten
+    QObject::connect(robot, &Robot::check, interface, &Interface::sendCheck);               //Einschecken bzw. Auschecken
+    QObject::connect(robot, &Robot::charge, interface, &Interface::sendCharging);           //Ladevorgang starten
 
     //Start agent execution
     QObject::connect(interface, &Interface::connected, cycleTimer, [=]() { cycleTimer->start(100); });

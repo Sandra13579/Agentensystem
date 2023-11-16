@@ -246,7 +246,7 @@ void Interface::ReconnectToBroker()
     m_mqttClient->connectToHost();
 }
 
-void Interface::SendJob(Job job, int robotNo)
+void Interface::sendJob(Job job, int robotNo)
 {
     QJsonObject start
         {
@@ -269,7 +269,7 @@ void Interface::SendJob(Job job, int robotNo)
     PublishMqttMessage(QString(topicJob).replace("<No>", QString::number(robotNo)), payload);
 }
 
-void Interface::SendCheck(int robotNo)
+void Interface::sendCheck(int robotNo)
 {
     QJsonObject object
         {
@@ -280,7 +280,7 @@ void Interface::SendCheck(int robotNo)
     PublishMqttMessage(QString(topicChecked).replace("<No>", QString::number(robotNo)), payload);
 }
 
-void Interface::SendCharging (bool chargingState, int stationId, int robotId)
+void Interface::sendCharging (bool chargingState, int stationId, int robotId)
 {
     QJsonObject object
         {
@@ -291,7 +291,7 @@ void Interface::SendCharging (bool chargingState, int stationId, int robotId)
     PublishMqttMessage(QString(topicCharging).replace("<No>", QString::number(stationId)), payload);
 }
 
-void Interface::SendAllRfidReadersOff()
+void Interface::sendAllRfidReadersOff()
 {
     QJsonObject payload
         {
@@ -300,7 +300,7 @@ void Interface::SendAllRfidReadersOff()
     PublishMqttMessage(topicRfidReaderOn, QJsonDocument(payload).toJson(QJsonDocument::Compact), 0, true);
 }
 
-void Interface::SendRfidReaderOn(int stationId)
+void Interface::sendRfidReaderOn(int stationId)
 {
     QJsonObject payload
         {
@@ -322,7 +322,7 @@ void Interface::SendRfidReaderOff(int stationId)
     }
     if (activeStationCount == 1)
     {
-        SendAllRfidReadersOff();
+        sendAllRfidReadersOff();
     }
     m_rfidStationStates[stationId] = false;
 }

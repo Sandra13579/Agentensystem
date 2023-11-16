@@ -77,21 +77,20 @@ private:
     void SubscribeToTopics();
 
 signals:
-    void robotStateChanged(int robotId, State state, Place place);
-    void chargingStationStateChanged(int placeId, State state);
-
-    void serialNumberRead(int stationId, int serialNumber);
+    void close(void);
     void connected(void);
     void disconnected(void);
-    void close(void);
+    void robotStateChanged(int robotId, State state, Place place);
+    void chargingStationStateChanged(int placeId, State state);
+    void serialNumberRead(int stationId, int serialNumber);
 
 public slots:
     //MQTT payload methods
-    void SendJob(Job job, int robotNo);
-    void SendCheck(int robotNo);
-    void SendCharging(bool chargingState, int stationId, int robotId);
-    void SendAllRfidReadersOff();
-    void SendRfidReaderOn(int stationId);
+    void sendJob(Job job, int robotNo);
+    void sendCheck(int robotNo);
+    void sendCharging(bool chargingState, int stationId, int robotId);
+    void sendAllRfidReadersOff();
+    void sendRfidReaderOn(int stationId);
     void SendRfidReaderOff(int stationId);
 
 private slots:
@@ -103,7 +102,6 @@ private slots:
     //Handle changes in subscriber state (un-/subscibed/pending) and connection state (dis-/connected/pending)
     void UpdateSubscriberState(QMqttSubscription::SubscriptionState state);
     void UpdateConnectionState(QMqttClient::ClientState state);
-
     void ReconnectToBroker();
 };
 
