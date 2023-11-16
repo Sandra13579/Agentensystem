@@ -117,7 +117,7 @@ void Dispatcher::charging()
 
         //suche freie Roboter mit geringstem Battery Zustand, aber mindestens Batteriezustand < 30
         QSqlQuery query2(database->db());
-        query2.prepare("SELECT robot_id, state_id FROM vpj.robot WHERE battery_level < 30 AND maintenance = 0 AND state_id IN (0, 1, 2, 6) AND jobtype_id = 3 ORDER BY battery_level ASC");
+        query2.prepare("SELECT robot_id, state_id FROM vpj.robot WHERE battery_level <= 30 AND maintenance = 0 AND state_id IN (0, 1, 2, 6) AND jobtype_id = 3 ORDER BY battery_level ASC");
         query2.exec();
         if (query2.next()) // wenn auch ein Roboter da ist, der geladen werden muss
         {
