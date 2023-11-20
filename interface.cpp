@@ -154,7 +154,10 @@ void Interface::GetSubscriptionPayload(const QMqttMessage msg)
             int batLevel = obj["battery_power"].toInt(-1);
             int robotId = topicLevel[1].toInt();
             //qDebug() << "Battery Level robot " << robotId << ":" << batLevel << "%";
-            WriteBatteryLevelIntoDatabase(robotId, batLevel);
+            if (batLevel > 0)
+            {
+                WriteBatteryLevelIntoDatabase(robotId, batLevel);
+            }
         }
         //Robot status
         else if (topicLevel[2] == "Status")
