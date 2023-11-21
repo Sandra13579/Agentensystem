@@ -147,6 +147,7 @@ void Robot::charging()
         {
             //Roboter reservieren
             qDebug() << "Charging: Robot" << robotId << "is reserved";
+            m_chargingStationStates[placeId] = State::Initial;
             m_database->updateRobotState(robotId, State::Reserved);
         }
 
