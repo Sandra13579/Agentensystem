@@ -238,7 +238,7 @@ void Dispatcher::transport()
             }
 
             //qDebug() << "destination_station_place_id" << destination_station_place_id << ", destination_place_id" << destinationPlaceId << ", destination_station_id" << destinationStationId;
-            if (destinationPlaceId != -1)
+            if (destinationPlaceId != -1 || destination_station_place_id !=-1)
             {
                 //steht kein Roboter an der aktuellen Station?
                 QSqlQuery query6(database->db());
