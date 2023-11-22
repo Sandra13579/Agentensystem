@@ -4,12 +4,12 @@ Station::Station(QObject *parent)
     : QObject{parent}
 {
     database = new Database("Station");
-    database->Connect();
+    database->connect();
 }
 
 Station::~Station()
 {
-    database->Disconnect();
+    database->disconnect();
 }
 
 void Station::updateStation()

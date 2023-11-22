@@ -4,12 +4,12 @@ Workpiece::Workpiece(QObject *parent)
     : QObject{parent}
 {
     database = new Database("Workpiece");
-    database->Connect();
+    database->connect();
 }
 
 Workpiece::~Workpiece()
 {
-    database->Disconnect();
+    database->disconnect();
 }
 
 void Workpiece::updateOrder()

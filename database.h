@@ -14,8 +14,8 @@ class Database : public QObject
     Q_OBJECT
 public:
     explicit Database(QString connectionName);
-    void Connect();  //Methode zur Herstellung der Datenbankverbindung
-    void Disconnect();  //Methode zur Trennung der Datenbankverbindung
+    void connect();  //Methode zur Herstellung der Datenbankverbindung
+    void disconnect();  //Methode zur Trennung der Datenbankverbindung
     QSqlDatabase db() const { return m_db; } //Übergabe an query!
 
     void updateRobotState(int robotId, State state);

@@ -7,7 +7,7 @@ Database::Database(QString connectionName)
 }
 
 //Verbindung zu Datenbank aufbauen
-void Database::Connect()
+void Database::connect()
 {
     QString connectString = QStringLiteral(
         "DRIVER={MySQL ODBC 8.0 Unicode Driver};"
@@ -28,7 +28,7 @@ void Database::Connect()
 }
 
 //Verbindung schließen/trennen
-void Database::Disconnect()
+void Database::disconnect()
 {
     if(m_db.open())
     {

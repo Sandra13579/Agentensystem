@@ -4,12 +4,12 @@ Interface::Interface(QObject *parent)
     : QObject{parent}
 {
     m_mqttClient = new QMqttClient(parent);
-    connect(m_mqttClient, &QMqttClient::stateChanged, this, &Interface::UpdateConnectionState);
+    connect(m_mqttClient, &QMqttClient::stateChanged, this, &Interface::updateConnectionState);
     m_udpSocket = new QUdpSocket(parent);
     m_robotPositionWriter = new QTimer(parent);
-    connect(m_robotPositionWriter, &QTimer::timeout, this, &Interface::WriteRobotPositionsInDatabase);
+    connect(m_robotPositionWriter, &QTimer::timeout, this, &Interface::writeRobotPositionsIntoDatabase);
     m_database = new Database("Interface");
-    m_database->Connect();
+    m_database->connect();
 
     QSqlQuery query(m_database->db());
     query.prepare("SELECT robot_position_x, robot_position_y FROM vpj.robot");
@@ -34,10 +34,10 @@ Interface::Interface(QObject *parent)
 
 Interface::~Interface()
 {
-    disconnect(m_robotPositionWriter, &QTimer::timeout, this, &Interface::WriteRobotPositionsInDatabase);
+    disconnect(m_robotPositionWriter, &QTimer::timeout, this, &Interface::writeRobotPositionsIntoDatabase);
     m_robotPositionWriter->stop();
     delete m_robotPositionWriter;
-    m_database->Disconnect();
+    m_database->disconnect();
     delete m_database;
     m_udpSocket->close();
     delete m_udpSocket;
@@ -45,7 +45,7 @@ Interface::~Interface()
     delete m_mqttClient;
 }
 
-void Interface::ConnectToBroker(QString ip, int port)
+void Interface::connectToBroker(QString ip, int port)
 {
     m_mqttClient->setHostname(ip);
     m_mqttClient->setPort(port);
@@ -55,12 +55,12 @@ void Interface::ConnectToBroker(QString ip, int port)
     m_mqttClient->connectToHost();
 }
 
-void Interface::DisconnectFromBroker()
+void Interface::disconnectFromBroker()
 {
     m_mqttClient->disconnectFromHost();
 }
 
-void Interface::ReadUdpData()
+void Interface::readUdpData()
 {
     while(m_udpSocket->hasPendingDatagrams())
     {
@@ -70,29 +70,29 @@ void Interface::ReadUdpData()
         //Robot positions
         for (int i = 0; i < udpRobotCount * udpRobotSize; i += udpRobotSize)
         {
-            Position pos = GetRobotPosition(data, i);
+            Position pos = getRobotPosition(data, i);
             m_robotPositions.positions.append(pos);
             //qDebug() << "Robot" << (i / 32 + 1) << " --> x: " << pos.x << "y: " << pos.y << "phi: " << pos.phi << "e: " << pos.e;
         }
         //Timestamp
-        m_robotPositions.timestamp = GetTimestamp(data, udpRobotCount * udpRobotSize).toString("HH:mm:ss");
+        m_robotPositions.timestamp = getTimestamp(data, udpRobotCount * udpRobotSize).toString("HH:mm:ss");
         //qDebug() << "timestamp:" << _robotPositions.timestamp;
         m_positionDataAvailable = true;
     }
 }
 
-void Interface::StartUdpListening(int port)
+void Interface::startUdpListening(int port)
 {
     //Bind port of the UDP camera host
     m_udpSocket->bind(QHostAddress::Any, port);
 
     //Connect the "ready" signal from the camera host (UDP) to the "ReadUdpData" method of this class
-    connect(m_udpSocket, &QUdpSocket::readyRead, this, &Interface::ReadUdpData);
+    connect(m_udpSocket, &QUdpSocket::readyRead, this, &Interface::readUdpData);
 
     qDebug() << "Listening on UDP Port" << m_udpSocket->localPort();
 }
 
-void Interface::WriteRobotPositionsInDatabase()
+void Interface::writeRobotPositionsIntoDatabase()
 {
     if (!m_positionDataAvailable)
         return;
@@ -119,7 +119,7 @@ void Interface::WriteRobotPositionsInDatabase()
     m_positionDataAvailable = false;
 }
 
-void Interface::WriteBatteryLevelIntoDatabase(int robotId, int batteryLevel)
+void Interface::writeBatteryLevelIntoDatabase(int robotId, int batteryLevel)
 {
     QSqlQuery query(m_database->db());
     query.prepare("UPDATE vpj.robot SET battery_level = :battery_level WHERE robot_id = :id");
@@ -128,7 +128,7 @@ void Interface::WriteBatteryLevelIntoDatabase(int robotId, int batteryLevel)
     query.exec();
 }
 
-void Interface::GetSubscriptionPayload(const QMqttMessage msg)
+void Interface::getSubscriptionPayload(const QMqttMessage msg)
 {
     /* Ordungsgemäßes Schließen der Anwendung testweise!!!!!!! */
     /* Einfach über MQTT den Payload "exit" schicken --------- */
@@ -156,7 +156,7 @@ void Interface::GetSubscriptionPayload(const QMqttMessage msg)
             //qDebug() << "Battery Level robot " << robotId << ":" << batLevel << "%";
             if (batLevel > 0)
             {
-                WriteBatteryLevelIntoDatabase(robotId, batLevel);
+                writeBatteryLevelIntoDatabase(robotId, batLevel);
             }
         }
         //Robot status
@@ -187,15 +187,15 @@ void Interface::GetSubscriptionPayload(const QMqttMessage msg)
     }
 }
 
-void Interface::SubscribeToTopics()
+void Interface::subscribeToTopics()
 {
-    m_subscriptionRobotStatus = GetSubscription(topicRobotState);
-    m_subscriptionChargingStation = GetSubscription(topicChargingStation);
-    m_subscriptionRobotEnergy = GetSubscription(topicRobotEnergy);
-    m_subscriptionRfidStation = GetSubscription(topicRfidSerialNumber);
+    m_subscriptionRobotStatus = getSubscription(topicRobotState);
+    m_subscriptionChargingStation = getSubscription(topicChargingStation);
+    m_subscriptionRobotEnergy = getSubscription(topicRobotEnergy);
+    m_subscriptionRfidStation = getSubscription(topicRfidSerialNumber);
 }
 
-void Interface::UnsubscribeAllTopics()
+void Interface::unsubscribeAllTopics()
 {
     m_subscriptionRobotStatus->unsubscribe();
     m_subscriptionChargingStation->unsubscribe();
@@ -203,7 +203,7 @@ void Interface::UnsubscribeAllTopics()
     m_subscriptionRfidStation->unsubscribe();
 }
 
-void Interface::UpdateSubscriberState(QMqttSubscription::SubscriptionState state)
+void Interface::updateSubscriberState(QMqttSubscription::SubscriptionState state)
 {
     switch (state)
     {
@@ -223,20 +223,20 @@ void Interface::UpdateSubscriberState(QMqttSubscription::SubscriptionState state
     }
 }
 
-void Interface::UpdateConnectionState(QMqttClient::ClientState state)
+void Interface::updateConnectionState(QMqttClient::ClientState state)
 {
     switch (state)
     {
     case QMqttClient::Connected:
         qDebug() << "MQTT Client with ID" << m_mqttClient->clientId() << "connected to broker:" << m_mqttClient->hostname() << ":" << m_mqttClient->port();
-        SubscribeToTopics();
+        subscribeToTopics();
         QTimer::singleShot(1, this, [this]() { emit connected(); });   //Zum Einschalten der Agenten
         break;
     case QMqttClient::Disconnected:
         qDebug() << "MQTT Client with ID" << m_mqttClient->clientId() << "disconnected!";
         QTimer::singleShot(1, this, [this]() { emit disconnected(); });   //Zum Einschalten der Agenten
-        UnsubscribeAllTopics();
-        QTimer::singleShot(2000, this, &Interface::ReconnectToBroker);
+        unsubscribeAllTopics();
+        QTimer::singleShot(2000, this, &Interface::reconnectToBroker);
         break;
     case QMqttClient::Connecting:
         qDebug() << "MQTT connection pending...";
@@ -244,7 +244,7 @@ void Interface::UpdateConnectionState(QMqttClient::ClientState state)
     }
 }
 
-void Interface::ReconnectToBroker()
+void Interface::reconnectToBroker()
 {
     m_mqttClient->connectToHost();
 }
@@ -269,7 +269,7 @@ void Interface::sendJob(Job job, int robotNo)
         };
 
     QString payload = QJsonDocument(object).toJson(QJsonDocument::Compact);
-    PublishMqttMessage(QString(topicJob).replace("<No>", QString::number(robotNo)), payload);
+    publishMqttMessage(QString(topicJob).replace("<No>", QString::number(robotNo)), payload);
 }
 
 void Interface::sendCheck(int robotNo)
@@ -280,7 +280,7 @@ void Interface::sendCheck(int robotNo)
         };
 
     QString payload = QJsonDocument(object).toJson(QJsonDocument::Compact);
-    PublishMqttMessage(QString(topicChecked).replace("<No>", QString::number(robotNo)), payload);
+    publishMqttMessage(QString(topicChecked).replace("<No>", QString::number(robotNo)), payload);
 }
 
 void Interface::sendCharging (bool chargingState, int stationId, int robotId)
@@ -291,7 +291,7 @@ void Interface::sendCharging (bool chargingState, int stationId, int robotId)
             {"robot", robotId}
         };
     QString payload = QJsonDocument(object).toJson(QJsonDocument::Compact);
-    PublishMqttMessage(QString(topicCharging).replace("<No>", QString::number(stationId)), payload);
+    publishMqttMessage(QString(topicCharging).replace("<No>", QString::number(stationId)), payload);
 }
 
 void Interface::sendAllRfidReadersOff()
@@ -331,7 +331,7 @@ void Interface::SendRfidReaderOff(int stationId)
 }
 
 // Publish an MQTT message with with the given payload and topic
-void Interface::PublishMqttMessage(QString topic, QString payload)
+void Interface::publishMqttMessage(QString topic, QString payload)
 {
     PublishMqttMessage(topic, payload, 0, false);
 }
@@ -343,16 +343,16 @@ void Interface::PublishMqttMessage(QString topic, QString payload, quint8 qos, b
     m_mqttClient->publish(QMqttTopicName(topic), message, qos, retain);
 }
 
-QMqttSubscription *Interface::GetSubscription(QString topic)
+QMqttSubscription *Interface::getSubscription(QString topic)
 {
     auto tmp = m_mqttClient->subscribe(QMqttTopicFilter(topic));
-    connect(tmp, &QMqttSubscription::messageReceived, this, &Interface::GetSubscriptionPayload);
-    connect(tmp, &QMqttSubscription::stateChanged, this, &Interface::UpdateSubscriberState);
+    connect(tmp, &QMqttSubscription::messageReceived, this, &Interface::getSubscriptionPayload);
+    connect(tmp, &QMqttSubscription::stateChanged, this, &Interface::updateSubscriberState);
     qDebug() << "Subscribe to topic" << tmp->topic().filter();
     return tmp;
 }
 
-double Interface::GetDoubleFromByteArray(const QByteArray data, int index, int offset)
+double Interface::getDoubleFromByteArray(const QByteArray data, int index, int offset)
 {
     QByteArray sub(8, 0);
     double value = 0;
@@ -367,23 +367,23 @@ double Interface::GetDoubleFromByteArray(const QByteArray data, int index, int o
     return value;
 }
 
-Position Interface::GetRobotPosition(const QByteArray data, int index)
+Position Interface::getRobotPosition(const QByteArray data, int index)
 {
     Position pos;
-
-    pos.x = GetDoubleFromByteArray(data, index, 0);
-    pos.y = GetDoubleFromByteArray(data, index, 8);
-    pos.phi = GetDoubleFromByteArray(data, index, 16);
-    pos.e = GetDoubleFromByteArray(data, index, 24);
+    
+    pos.x = getDoubleFromByteArray(data, index, 0);
+    pos.y = getDoubleFromByteArray(data, index, 8);
+    pos.phi = getDoubleFromByteArray(data, index, 16);
+    pos.e = getDoubleFromByteArray(data, index, 24);
 
     return pos;
 }
 
-QTime Interface::GetTimestamp(const QByteArray data, int index)
+QTime Interface::getTimestamp(const QByteArray data, int index)
 {
-    int hour = (int)GetDoubleFromByteArray(data, index, 0);
-    int min = (int)GetDoubleFromByteArray(data, index, 8);
-    int sec = (int)GetDoubleFromByteArray(data, index, 16);
+    int hour = (int)getDoubleFromByteArray(data, index, 0);
+    int min = (int)getDoubleFromByteArray(data, index, 8);
+    int sec = (int)getDoubleFromByteArray(data, index, 16);
 
     return QTime(hour, min, sec);
 }

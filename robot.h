@@ -42,14 +42,12 @@ private:
     QList<Place> m_robotPlaces;
     QList<State> m_chargingStationStates;
 
-    void reading(int robotId);
-    void checking(int robotId);
-    void transportFinished(int robotId);
-    void ladevorgang(int robotId);
-
     void transport();
     void charging();
     void maintenance();
+    void reading(int robotId);
+    void checking(int robotId);
+    void transportFinished(int robotId);
 };
 
 #endif // ROBOT_H

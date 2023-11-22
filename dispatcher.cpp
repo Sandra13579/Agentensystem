@@ -4,12 +4,12 @@ Dispatcher::Dispatcher(QObject *parent)
     : QObject{parent}
 {
     database = new Database("Dispatcher");
-    database->Connect();
+    database->connect();
 }
 
 Dispatcher::~Dispatcher()
 {
-    database->Disconnect();
+    database->disconnect();
 }
 
 void Dispatcher::updateJobtype()

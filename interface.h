@@ -24,10 +24,10 @@ public:
     explicit Interface(QObject *parent = nullptr);
     ~Interface();
 
-    void ConnectToBroker(QString ip, int port = 1883);
-    void StartUdpListening(int port);
-    void DisconnectFromBroker();
-    void UnsubscribeAllTopics();
+    void connectToBroker(QString ip, int port = 1883);
+    void startUdpListening(int port);
+    void disconnectFromBroker();
+    void unsubscribeAllTopics();
 
     //Constants
     const int udpRobotSize = 32;
@@ -54,9 +54,10 @@ private:
     QMqttSubscription *m_subscriptionRfidStation = nullptr;
 
     //MQTT methods
-    void PublishMqttMessage(QString topic, QString payload);
+    void publishMqttMessage(QString topic, QString payload);
     void PublishMqttMessage(QString topic, QString payload, quint8 qos, bool retain);
-    QMqttSubscription * GetSubscription(QString topic);
+    void subscribeToTopics();
+    QMqttSubscription *getSubscription(QString topic);
     QMap<int, bool> m_rfidStationStates;
 
     //UDP
@@ -66,15 +67,13 @@ private:
     bool m_positionDataAvailable = false;
 
     //UDP payload parse methods
-    double GetDoubleFromByteArray(const QByteArray data, int index, int offset);
-    Position GetRobotPosition(const QByteArray data, int index);
-    QTime GetTimestamp(const QByteArray data, int index);
+    double getDoubleFromByteArray(const QByteArray data, int index, int offset);
+    Position getRobotPosition(const QByteArray data, int index);
+    QTime getTimestamp(const QByteArray data, int index);
 
     //Database write timer
     Database *m_database;
     QTimer *m_robotPositionWriter;
-
-    void SubscribeToTopics();
 
 signals:
     void close(void);
@@ -94,15 +93,15 @@ public slots:
     void SendRfidReaderOff(int stationId);
 
 private slots:
-    void ReadUdpData();    //Slot that reads the UDP payload
-    void GetSubscriptionPayload(const QMqttMessage msg);
-    void WriteRobotPositionsInDatabase();
-    void WriteBatteryLevelIntoDatabase(int robotId, int batteryLevel);
+    void readUdpData();    //Slot that reads the UDP payload
+    void getSubscriptionPayload(const QMqttMessage msg);
+    void writeRobotPositionsIntoDatabase();
+    void writeBatteryLevelIntoDatabase(int robotId, int batteryLevel);
 
     //Handle changes in subscriber state (un-/subscibed/pending) and connection state (dis-/connected/pending)
-    void UpdateSubscriberState(QMqttSubscription::SubscriptionState state);
-    void UpdateConnectionState(QMqttClient::ClientState state);
-    void ReconnectToBroker();
+    void updateSubscriberState(QMqttSubscription::SubscriptionState state);
+    void updateConnectionState(QMqttClient::ClientState state);
+    void reconnectToBroker();
 };
 
 #endif // INTERFACE_H

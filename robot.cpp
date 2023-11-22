@@ -4,7 +4,7 @@ Robot::Robot(QObject *parent)
     : QObject{parent}
 {
     m_database = new Database("Robot");
-    m_database->Connect();
+    m_database->connect();
 
     for (int i = 0; i < 5; ++i)
     {
@@ -26,7 +26,7 @@ void Robot::updateRobot()
 
 Robot::~Robot()
 {
-    m_database->Disconnect();
+    m_database->disconnect();
 }
 
 //Update robot states from GW2 (MQTT)
@@ -324,7 +324,7 @@ void Robot::checking(int robotId)
                 query3.prepare("UPDATE vpj.workpiece SET checked_in = 0, station_place_id = ( SELECT destination_station_place_id FROM vpj.workpiece WHERE workpiece_id = :workpiece_id ) WHERE workpiece_id = :workpiece_id");
                 query3.bindValue(":workpiece_id", workpieceId);
                 query3.exec();
-                m_database->updateWorkpieceHistory(workpieceId);
+                //m_database->updateWorkpieceHistory(workpieceId);
             }
         }
         else
@@ -335,7 +335,7 @@ void Robot::checking(int robotId)
             query2.prepare("UPDATE vpj.workpiece SET checked_in = 1 WHERE workpiece_id = :workpiece_id");
             query2.bindValue(":workpiece_id", workpieceId);
             query2.exec();
-            m_database->updateWorkpieceHistory(workpieceId);
+            //m_database->updateWorkpieceHistory(workpieceId);
         }
     }
 }
