@@ -176,6 +176,7 @@ void Dispatcher::transport()
         {
             workpiece_id = query2.record().value(0).toInt();
             start_station_place_id = query2.record().value(3).toInt();
+            int destination_station_place_id = -1;
 
             QSqlQuery query3(database->db());
             query3.prepare("SELECT sequence FROM vpj.production_step WHERE step_id = :step_id AND production_process_id = :production_process_id;");
