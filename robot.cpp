@@ -244,12 +244,13 @@ void Robot::continueReading(int stationId, int serialNumber)
         qDebug() << "Reading: Continue reading sequence at station" << stationId << "with serial number" << serialNumber;
         emit rfidOff(stationId);
         QSqlQuery query(m_database->db());
-        query.prepare("SELECT rfid FROM vpj.workpiece INNER JOIN vpj.station_place ON workpiece.station_place_id = station_place.station_place_id WHERE station_place.station_id = :station_id AND workpiece.workpiece_state_id = 3");
+        query.prepare("SELECT rfid, workpiece_id FROM vpj.workpiece INNER JOIN vpj.station_place ON workpiece.station_place_id = station_place.station_place_id WHERE station_place.station_id = :station_id AND workpiece.workpiece_state_id = 3");
         query.bindValue(":station_id", stationId);
         query.exec();
         if (query.next())
         {
             int ratedSerialNumber = query.record().value(0).toInt();
+            int workpiece_id = query.record().value(1).toInt();
             if (serialNumber != ratedSerialNumber)
             {
                 qDebug() << "Reading Error: Read serial number" << serialNumber << "is not equal to rated serial number" << ratedSerialNumber << "in database!";
@@ -262,8 +263,8 @@ void Robot::continueReading(int stationId, int serialNumber)
             }
             qDebug() << "Reading: Rated serial number:" << ratedSerialNumber << "is ok";
             QSqlQuery query2(m_database->db());
-            query2.prepare("SELECT robot_id from vpj.workpiece WHERE rfid = :rfid");
-            query2.bindValue(":rfid", serialNumber);
+            query2.prepare("SELECT robot_id from vpj.workpiece WHERE workpiece_id = :workpiece_id");
+            query2.bindValue(":workpiece_id", workpiece_id);
             query2.exec();
             //Determine robot number (from DB) and initiate "checkout".
 
